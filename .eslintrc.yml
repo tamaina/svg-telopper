@@ -1,0 +1,7 @@
+extends: airbnb-base
+rules:
+  indent: [error, 2]
+  linebreak-style: [error, windows]
+  comma-dangle: [error, never]
+  semi: [error, never]
+  quotes: [error, double]

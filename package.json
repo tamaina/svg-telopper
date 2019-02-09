@@ -1,0 +1,29 @@
+{
+  "name": "svgtelopper",
+  "version": "1.0.0",
+  "description": "SVGを読み込み、OBSでテロップを表示します。",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "gulp local-server"
+  },
+  "author": "tamaina",
+  "license": "ISC",
+  "dependencies": {
+    "@types/query-string": "^6.2.0",
+    "cafy": "^12.1.0",
+    "colors": "^1.3.3",
+    "eslint": "^5.13.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "fancy-log": "^1.3.3",
+    "gulp": "^4.0.0",
+    "gulp-connect": "^5.7.0",
+    "gulp-load-plugins": "^1.5.0",
+    "js-yaml": "^3.12.1",
+    "query-string": "^6.2.0",
+    "ts-loader": "^5.3.3",
+    "tslint": "^5.12.1",
+    "typescript": "^3.3.3",
+    "webpack": "^4.29.3",
+    "webpack-stream": "^5.2.1"
+  }
+}

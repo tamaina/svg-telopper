@@ -1,0 +1,77 @@
+html, body {
+  height: 100vh;
+  width: 100vw;
+  font-size: 5vmin;
+}
+
+html {
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+}
+
+#client { /* クライアント(svgの表示範囲) */
+  height: 60vh; /* 高さ (nvh = ブラウザソース高さのn%) */
+  width: 90vw; /* 幅 (nvw = ブラウザソース幅のn%) */
+  position: relative;
+}
+
+.wrapper { /* 覆いの大きさ */
+  height: 100%; /* クライアントと同じ(100%) */
+  width: 100%; /* クライアントと同じ(100%) */
+  transform-origin: center; /* 変形の基準位置 */
+  overflow: visible;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+svg { /* svgの大きさ */
+  height: 100%; /* クライアントと同じ(100%) */
+  width: 100%; /* クライアントと同じ(100%) */
+  transform-origin: left top; /* 変形の基準位置 */
+  overflow: visible;
+}
+
+/*    アニメーション(表示)    */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+svg.show {
+  animation-duration: 1s;
+  animation-name: fadeInUp;
+}
+
+/*    アニメーション(消滅)   */
+
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -10%, 42px);
+  }
+}
+
+svg:not(.show) {
+  animation-duration: 1s;
+  animation-name: fadeOutUp;
+  opacity: 0;
+}
