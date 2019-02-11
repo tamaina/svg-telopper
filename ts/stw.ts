@@ -83,15 +83,9 @@ export class STW {
             transforms.push(`scaleX(${wratio})`)
           }
 
-          let hratio = clientBcr.height / subtitleBcr.height
+          const hratio = clientBcr.height / subtitleBcr.height
           if (hratio < 1) {
-            let subtitleBcr2 = subtitleBcr
-            while (subtitleBcr2.height > clientBcr.height) {
-              subtitleBcr2 = subtitle.getElementsByTagName("g").item(0).getBoundingClientRect()
-              hratio -= 0.0025
-              subtitle.style.transform = `scaleY(${hratio})`
-            }
-            transforms.push(`scaleY(${hratio})`)
+            // 何もしない
           } else if (this.queries.stretch) {
             transforms.push(`scaleY(${hratio})`)
           }
