@@ -2,9 +2,9 @@ import $ from "cafy"
 import { parse as parseQs } from "query-string"
 
 export interface IQueries {
-  text: string[]
+  text: string[][]
   svg: string
-  replace: string
+  replace: string[]
   interval: number
   class?: string
   reverse: boolean
@@ -14,7 +14,7 @@ export interface IQueries {
 export interface IExpectedQueries {
   text: string | string[]
   svg: string
-  replace?: string
+  replace?: string | string[]
   interval?: string
   class?: string
   reverse?: string
@@ -29,13 +29,33 @@ export const validateQueries = (eq: IExpectedQueries): IQueries => {
   const res = {} as IQueries
   const errors = [] as string[]
 
-  /* text */
-  if ($.str.ok(eq.text)) {
-    res.text = [ eq.text as string ]
-  } else if ($.arr($.str).min(1).ok(eq.text)) {
-    res.text = eq.text as string[]
+  /* replace */
+  if ($.str.ok(eq.replace)) {
+    res.replace = [eq.replace as string]
+  } else if ($.arr($.str).ok(eq.replace)) {
+    res.replace = eq.replace as string[]
+  } else if (eq.replace) {
+    errors.push("値'replace'が間違っているようです。")
   } else {
-    errors.push("値'text'が間違っているようです。?text=ひとつめ(&text=ふたつめ&text=みっつめ) のように指定しましょう。")
+    res.replace = ["ここに文章を入力"]
+  }
+
+  /* text */
+  if ($.str.ok(eq.text) && res.replace.length === 1) {
+    res.text = [[ eq.text as string ]]
+  } else if ($.arr($.str).min(res.replace.length).ok(eq.text)) {
+    if (eq.text.length === res.replace.length) res.text = [eq.text as string[]]
+    else if (eq.text.length % res.replace.length === 0) {
+      res.text = []
+      for (let i = 0; i < (eq.text.length / res.replace.length); i += 1) {
+        const j = i * res.replace.length
+        res.text.push((eq.text as string[]).slice(j, j + res.replace.length))
+      }
+    } else {
+      errors.push("値'text'が間違っているようです。textはreplaceで指定した倍数分指定する必要があります。")
+    }
+  } else {
+    errors.push("値'text'が間違っているようです。?text=ひとつめ(&text=ふたつめ&text=みっつめ) のように指定しましょう。replaceが複数の場合、その長さの分だけ指定する必要があります。")
   }
 
   /* svg */
@@ -47,15 +67,6 @@ export const validateQueries = (eq: IExpectedQueries): IQueries => {
     }
   } else {
     errors.push("値'svg'が間違っているようです。文字列で指定しましょう。")
-  }
-
-  /* replace */
-  if ($.str.ok(eq.replace)) {
-    res.replace = eq.replace
-  } else if (eq.replace) {
-    errors.push("値'replace'が間違っているようです。")
-  } else {
-    res.replace = "ここに文章を入力"
   }
 
   /* interval */

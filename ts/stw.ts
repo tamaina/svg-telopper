@@ -24,14 +24,42 @@ export class STW {
       .then(res => res.text())
       .then(svg => {
         this.svg = svg
-        const re = new RegExp(this.queries.replace, "g")
+        const replacers = []
+        for (const replacer of this.queries.replace) {
+          replacers.push(new RegExp(replacer, "g"))
+        }
         for (const text of this.queries.text) {
+          let rsvg = svg
+          for (let i = 0; i < replacers.length; i += 1) {
+            rsvg = rsvg.replace(replacers[i], text[i])
+          }
           this.client.insertAdjacentHTML(
             "beforeend",
-            `<div class="wrapper">${svg.replace(re, text)}</div>`
+            `<div class="wrapper">${rsvg}</div>`
           )
         }
         this.subtitles = Array.from(this.client.children) as HTMLElement[]
+
+        const anchor = this.subtitles[0].getElementsByTagName("text").item(0).style.textAnchor
+
+        let transformOrigin = ""
+        switch (anchor) {
+        case "start":
+          transformOrigin = "left"
+          break
+        case "end":
+          transformOrigin = "right"
+          break
+        case "middle":
+        default:
+          transformOrigin = "center"
+          break
+        }
+
+        for (const subtitle of this.subtitles) {
+          subtitle.style.transformOrigin = transformOrigin
+        }
+
         const clientBcr = this.client.getBoundingClientRect()
         for (const subtitle of this.subtitles) {
           subtitle.children.item(0).classList.add("show")
