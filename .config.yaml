@@ -1,0 +1,13 @@
+# アクセスされるURL
+url: http://localhost:4044
+
+# サーバーが開設するポート
+port: 4044
+
+# 使うデータベース
+db: data
+
+# OBS
+obs:
+  address: localhost:4444
+#  password: 

@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "target": "es2017",
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "lib": ["dom", "es6"],
+        "types": ["node"],
+        "outDir": "./built",
+    },
+    "include": ["src"],
+    "exclude": ["node_modules", "**/__tests__/*", "src/clients"]
+}

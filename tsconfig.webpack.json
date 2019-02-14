@@ -5,5 +5,6 @@
         "moduleResolution": "node",
         "module": "esnext",
         "lib": ["dom", "es6"],
+        "types": ["node"]
     }
 }
