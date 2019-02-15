@@ -77,20 +77,21 @@ export const obsSocket = (server: STServer) => {
   })
 
   obs.connect(config.obs)
-    .then(() => {
+    .then(async () => {
       log("OBSのWebsocketへの接続に成功しました。")
-
       server.obs = obs
-
-      return obsInit()
+      await Promise.all([
+        db.obsScenes.remove({}),
+        db.obsSources.remove({})
+      ])
+      return await obsInit()
     }, err => {
       throw new Error(err)
     })
     .then(async () => {
-      log(
-`OBSから情報を取得しました。
-シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`
-      )
+      log("OBSから情報を取得しました。")
+// tslint:disable-next-line: max-line-length
+      log(`シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
       obs.send("SetHeartbeat", { enable: true }, err => {
         if (err) {
           log(err)
