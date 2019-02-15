@@ -1,47 +1,34 @@
+import * as colors from "colors"
 import * as log from "fancy-log"
-import { readFileSync } from "fs"
-import { createServer } from "http"
-import * as Koa from "koa"
-import * as logger from "koa-logger"
-import * as Pug from "koa-pug"
-import * as locales from "../../locales"
-import * as salt from "../../salt"
+import { createServer, Server } from "http"
+import * as OBSWebSocket from "obs-websocket-js"
+import { server } from "websocket"
 import { config } from "../config"
+import app from "./app"
 import { obsSocket } from "./obsSocket"
-import router from "./router"
+import { pkg } from "./pkg"
 import { socket } from "./socket"
 
-const pkg = JSON.parse(readFileSync(`${__dirname}/../../package.json`, "utf8"))
+export interface IObsInfo {
+  scName: string
+  scenes: string[]
+}
 
-const app = new Koa()
+export class STServer {
+  public obs: OBSWebSocket = null
+  public obsInfo: IObsInfo = null
+  public ws: server = null
+  public httpServer: Server = null
 
-const langs = JSON.stringify(Object.keys(locales))
+  constructor() {
+    log(`SVG Telopper v${pkg.version} Server Starting...`)
 
-new Pug({
-  app,
-  basedir: process.cwd(),
-  locals: {
-    config,
-    env: process.env.NODE_ENV,
-    langs,
-    pkg,
-    require,
-    salt: process.env.NODE_ENV === "development" ? salt() : ""
-  },
-  viewPath: `${__dirname}/views`
-})
+    this.httpServer = createServer(app.callback())
+    socket(this)
+    this.httpServer.listen(config.port)
+    log(`サーバーを開始しました。${config.url.green}`)
+    obsSocket(this)
+  }
+}
 
-app.use(logger())
-app.use(router.routes())
-app.use(router.allowedMethods())
-
-app.listen(3000)
-
-export default () => new Promise(resolve => {
-  log(`SVG Type Writer v${pkg.version} Server Starting...`)
-
-  const server = createServer(app.callback())
-  const ws = socket(server)
-  server.listen(config.port, resolve)
-  obsSocket(ws)
-})
+export default () => new STServer()

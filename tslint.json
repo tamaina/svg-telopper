@@ -17,7 +17,8 @@
         "no-unused-expression": [true, "allow-new"],
         "curly": [true, "ignore-same-line"],
         "arrow-parens": [true, "ban-single-arg-parens"],
-        "indent": [true, "spaces", 2]
+        "indent": [true, "spaces", 2],
+        "object-literal-sort-keys": false
     },
     "rulesDirectory": []
 }

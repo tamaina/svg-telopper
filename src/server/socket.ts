@@ -1,14 +1,16 @@
 import * as log from "fancy-log"
-import * as http from "http"
 import * as websocket from "websocket"
+import db from "./db"
 
-import { ISocketData, ISocketDataRenderInstanceClosed } from "../models/socketData"
+import { STServer } from "."
+import { ISocketData, ISocketRequestData } from "../models/socketData"
+import operations from "./api/operations"
 
-export const socket = (httpServer: http.Server) => {
-  const ws = new websocket.server({
-    httpServer
+export const socket = (server: STServer) => {
+  server.ws = new websocket.server({
+    httpServer: server.httpServer
   })
-  ws.on("request", request => {
+  server.ws.on("request", request => {
     const connection = request.accept("echo-protocol", request.origin)
 
     log(`WebSocket接続が開始されました。`)
@@ -20,7 +22,7 @@ export const socket = (httpServer: http.Server) => {
         log(`WebSocket接続が切断されました。`)
       })
 
-      if (rdata.type === "binary") ws.broadcast(rdata.binaryData)
+      if (rdata.type === "binary") server.ws.broadcast(rdata.binaryData)
       if (rdata.type !== "utf8") return
 
       if (rdata.utf8Data.startsWith("{")) {
@@ -30,30 +32,48 @@ export const socket = (httpServer: http.Server) => {
           case "ping":
             connection.send(JSON.stringify({
               body: {
-                t: (new Date()).getTime()
+                t: (new Date()).getTime(),
+                type: "ping"
               },
               type: "ping"
-            }))
+            } as ISocketData))
             break
-          case "initializeRenderInstance":
-            const { renderInstanceId } = data.body
-            log(`新しい描画インスタンスが接続されました: #${renderInstanceId}`)
-            const renderInstanceDied = () => {
-              log(`描画インスタンスは切断されました: #${renderInstanceId}`)
-              return ws.broadcast(JSON.stringify({
-                body: {
-                  renderInstanceId
-                } as ISocketDataRenderInstanceClosed,
-                type: "renderInstanceClosed"
-              } as ISocketData))
+          case "renderInstanceInfo":
+            switch (data.body.type) {
+              case "registerRenderInstance":
+                server.ws.broadcast(rdata.utf8Data)
+                const { renderInstanceId } = data.body
+                log(`新しい描画インスタンスが接続されました: #${renderInstanceId}`)
+                db.renderInstances.insert({ renderInstanceId })
+                const renderInstanceDied = () => {
+                  log(`描画インスタンスは切断されました: #${renderInstanceId}`)
+                  return server.ws.broadcast(JSON.stringify({
+                    body: {
+                      type: "renderInstanceDisconnected"
+                    },
+                    type: "renderInstanceInfo"
+                  } as ISocketData))
+                }
+                connection.on("close", renderInstanceDied)
+                connection.on("error", renderInstanceDied)
+                break
             }
-            connection.on("close", renderInstanceDied)
-            connection.on("error", renderInstanceDied)
+          case "request":
+            const operation = operations.find(e => e.name === data.body.type)
+            operation.exec(server, data as ISocketRequestData)
+            .then(res => {
+              connection.send(JSON.stringify(
+                Object.assign(
+                  { type: "response", instance: data.body.instance },
+                  res
+                )
+              ))
+            })
           default:
-            ws.broadcast(rdata.utf8Data)
+            server.ws.broadcast(rdata.utf8Data)
+            break
         }
       }
     })
   })
-  return ws
 }

@@ -1,52 +1,41 @@
-import { ISTWOptions } from "../scripts/components/stw"
-import { IQueries } from "./queries"
-
 export interface ISocketData {
   type: "ping" |
-        "registerRenderInstance" |
-        "initializeRenderInstance" |
-        "appendRenderInstanceSubtitles" |
-        "removeRenderInstanceSubtitles" |
-        "showRenderInstanceSubtitle"|
-        "renderInstanceClosed" |
-        "obsPreviewSceneChanged"
-  body: ISocketDataRegisterRenderInstance |
-        ISocketDataInitializeRenderInstance |
-        ISocketDataAppendRenderInstanceSubtitles |
-        ISocketDataRemoveRenderInstanceSubtitles |
-        ISocketDataShowRenderInstanceSubtitle |
-        ISocketDataRenderInstanceClosed |
-        any
+        "request" |
+        "response" |
+        "renderInstanceInfo" |
+        "obsRecievedData" |
+        "obsRequestData"
+  body: {
+    [ key: string ]: any
+    type: string
+    t?: number
+  }
 }
 
-export interface ISocketDataRegisterRenderInstance {
-  renderInstanceId: string,
-  width: number,
-  height: number
+export interface ISocketBroadData extends ISocketData {
+  type: "renderInstanceInfo" |
+        "obsRecievedData"
+  body: {
+    [ key: string ]: any
+    type: string
+  }
 }
 
-export interface ISocketDataInitializeRenderInstance {
-  renderInstanceId: string
-  queries: IQueries
-  options: ISTWOptions
+export interface ISocketRequestData extends ISocketData {
+  type: "request" |
+        "obsRequestData"
+  body: {
+    [ key: string ]: any
+    type: string
+    instance: string
+  }
 }
 
-export interface ISocketDataAppendRenderInstanceSubtitles {
-  renderInstanceId: string
-  queries: IQueries
-  showSoon: boolean
-}
-
-export interface ISocketDataRemoveRenderInstanceSubtitles {
-  renderInstanceId: string
-  targets: number[]
-}
-
-export interface ISocketDataShowRenderInstanceSubtitle {
-  renderInstanceId: string
-  target: number
-}
-
-export interface ISocketDataRenderInstanceClosed {
-  renderInstanceId: string
+export interface ISocketResponseData extends ISocketData {
+  type: "response"
+  body: {
+    [ key: string ]: any
+    type: string
+    instance: string
+  }
 }

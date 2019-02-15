@@ -12,7 +12,7 @@ export interface IRenderInstanceSetting {
   connections: Array<{ width: number, height: number }>
 }
 
-export const store = new Vuex.Store({
+export const Store = () => new Vuex.Store({
   plugins: [createPersistedState()],
   state: {
     obsScenes: [],

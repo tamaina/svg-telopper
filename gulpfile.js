@@ -62,7 +62,7 @@ gulp.task("copy:files", (cb) => {
 
 gulp.task("clean:built", () => del(["built/**/*"], { dot: true }))
 
-gulp.task("build",
+gulp.task("default",
   gulp.series(
     "clean:built",
     gulp.parallel(

@@ -1,29 +1,30 @@
-import { ISocketData, ISocketDataRegisterRenderInstance } from "../../models/socketData"
-import { getUniqueStr } from "../../scripts/components/getUniqueStr"
-import onReady from "../../scripts/components/onReady"
-import { newSocket, pass } from "../../scripts/components/socket"
-import { STW } from "../../scripts/components/stw"
+import { ISocketData } from "../../models/socketData"
+import { getUniqueStr } from "../scripts/getUniqueStr"
+import onReady from "../scripts/onReady"
+import { Socket } from "../scripts/socket"
+import { STW } from "../scripts/stw"
 
 const init = () => {
-  const socket = newSocket()
+  const socket = new Socket()
 
-  const renderInstanceId = location.hash.length > 1 ? location.hash.slice(1) : getUniqueStr()
+  const renderInstanceId = location.hash.length > 1 ? decodeURI(location.hash.slice(1)) : getUniqueStr()
 
   location.hash = `#${renderInstanceId}`
 
-  new STW(document.body, renderInstanceId, socket)
+  new STW(document.body, renderInstanceId, socket.socket)
 
   const rootRect = document.body.getBoundingClientRect()
 
-  socket.addEventListener("open", ev => {
-    pass({
+  socket.socket.addEventListener("open", ev => {
+    socket.pass({
       body: {
         height: rootRect.height,
         renderInstanceId,
+        type: "registerRenderInstance",
         width: rootRect.width
-      } as ISocketDataRegisterRenderInstance,
-      type: "registerRenderInstance"
-    } as ISocketData, socket)
+      },
+      type: "renderInstanceInfo"
+    } as ISocketData, socket.socket)
   })
 
   document.title = `SVG Telopper!: render#${renderInstanceId}`

@@ -1,55 +1,96 @@
 import * as log from "fancy-log"
 import * as OBSWebSocket from "obs-websocket-js"
-import { server } from "websocket"
+import { STServer } from "."
 import { config } from "../config"
-import { ISocketData } from "../models/socketData"
+import { ISocketBroadData } from "../models/socketData"
+import { broadcast } from "./broadcast"
+import db from "./db"
 
-export const obsSocket = (ws: server) => {
+export const obsSocket = (server: STServer) => {
   const obs = new OBSWebSocket()
   log("OBSのWebSocketに接続します...")
   log(config.obs)
 
-  obs.on("PreviewSceneChanged", data => {
-    ws.broadcast(JSON.stringify({
+  const broadcastData = (data: { [key: string]: any }) => {
+    broadcast({
       body: data,
-      type: "obsPreviewSceneChanged"
-    } as ISocketData))
-  })
+      type: "obsRecievedData"
+    } as ISocketBroadData, server.ws)
+  }
 
-  obs.on("SwitchScenes", data => {
-    ws.broadcast(JSON.stringify({
-      body: data,
-      type: "obsPreviewSceneChanged"
-    } as ISocketData))
+  const obsInit = async () => {
+    const [ { scName }, sceneList, sourcesList ] = await Promise.all([
+      obs.send("GetCurrentSceneCollection"),
+      obs.send("GetSceneList"),
+      obs.send("GetSourcesList")
+    ])
+    const scenes = sceneList.scenes.map(e => e.name)
+
+    await db.obsSources.insert((sourcesList.sources as any[]).map(e => {
+      return {
+        scenes: [],
+        children: [],
+        name: e.name,
+        type: e.typeId
+      }
+    }))
+
+    const updates = []
+    for (const scene of sceneList.scenes) {
+      db.obsScenes.insert(
+        { name: scene.name, items: scene.sources.map(e => e.name) }
+      )
+      for (const source of scene.sources) {
+        updates.push(db.obsSources.update(
+          { name: source.name },
+          { $push: { scenes: scene.name } },
+          {}
+        ))
+      }
+    }
+
+    const groups = await db.obsSources.find({type: "group"})
+    const groupSettings = await Promise.all(groups.map(e => {
+      return obs.send("GetSourceSettings", { sourceName: e.name })
+    }))
+    for (let i = 0; i < groups.length; i += 1) {
+      updates.push(db.obsSources.update(
+        { name: groups[i].name },
+        { $addToSet: { children: { $each: ((groupSettings[i] as any).sourceSettings).items.map(e => e.name) }} }
+      ))
+    }
+
+    server.obsInfo = { scName, scenes }
+    broadcastData(Object.assign({ type: "obsDataFullChanged" }, server.obsInfo))
+
+    return Promise.all(updates)
+  }
+
+  obs.on("PreviewSceneChanged", data => broadcastData(data))
+  obs.on("SwitchScenes", data => broadcastData(data))
+  obs.on("Exiting", () => {
+    log("OBSのWebSocketが切断されました。20秒後に再接続を試みます。")
+    obs.disconnect()
+    db.obsSources.remove({}, { multi: true })
+    server.obs = null
+    setTimeout(obsSocket.bind(null, server), 20000)
   })
 
   obs.connect(config.obs)
     .then(() => {
       log("OBSのWebsocketへの接続に成功しました。")
-      return Promise.all([
-        obs.send("GetSceneList")
-      ])
+
+      server.obs = obs
+
+      return obsInit()
     }, err => {
       throw new Error(err)
     })
-    .then(data => {
-      if (!data) throw new Error("OBS WebSocketから")
-      const [ sceneList ] = data
-
-      return Promise.all([
-        obs.send("ListSceneCollections"),
-        obs.send("GetCurrentSceneCollection")
-      ])
-    })
-    .then(data => {
-      console.log(data)
-
-      obs.on("Exiting", () => {
-        log("OBSのWebSocketが切断されました。20秒後に再接続を試みます。")
-        obs.disconnect()
-        setTimeout(obsSocket.bind(null, ws), 20000)
-      })
-
+    .then(async () => {
+      log(
+`OBSから情報を取得しました。
+シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`
+      )
       obs.send("SetHeartbeat", { enable: true }, err => {
         if (err) {
           log(err)
@@ -61,7 +102,9 @@ export const obsSocket = (ws: server) => {
             if ((new Date()).getTime() - last.getTime() > 4000) {
               log("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
               obs.disconnect()
-              setTimeout(obsSocket.bind(null, ws), 20000)
+              db.obsSources.remove({}, { multi: true })
+              server.obs = null
+              setTimeout(obsSocket.bind(null, server), 20000)
             }
           }, 5000)
         })
@@ -70,7 +113,8 @@ export const obsSocket = (ws: server) => {
     .catch(err => { // Promise convention dicates you have a catch on every chain.
       log("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
       log(err)
-      setTimeout(obsSocket.bind(null, ws), 20000)
+      server.obs = null
+      db.obsSources.remove({}, { multi: true })
+      setTimeout(obsSocket.bind(null, server), 20000)
     })
-  return obs
 }

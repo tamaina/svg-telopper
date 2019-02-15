@@ -1,14 +1,7 @@
 import $ from "cafy"
 import ReconnectingWebSocket from "reconnecting-websocket"
 import { IQueries, IQuery } from "../../models/queries"
-import {
-  ISocketData,
-  ISocketDataAppendRenderInstanceSubtitles,
-  ISocketDataInitializeRenderInstance,
-  ISocketDataRegisterRenderInstance,
-  ISocketDataRemoveRenderInstanceSubtitles,
-  ISocketDataShowRenderInstanceSubtitle
-} from "../../models/socketData"
+import { ISocketData } from "../../models/socketData"
 
 export interface ISTWOptions {
   queries: IQueries
@@ -33,24 +26,24 @@ export class STW {
       if (ev.type !== "utf8") return
       const data = JSON.parse(ev.data) as ISocketData
       if (data.body && data.body.renderInstanceId && data.body.renderInstanceId !== renderInstanceId) return
-      switch (data.type) {
+      switch (data.body.type) {
         case "initializeRenderInstance":
-          this.init(data.body as ISocketDataInitializeRenderInstance, root)
+          this.init(data.body, root)
           break
         case "appendRenderInstanceSubtitles":
-          this.insertSubtitles((data.body as ISocketDataAppendRenderInstanceSubtitles).queries)
+          this.insertSubtitles((data.body).queries)
           break
         case "removeRenderInstanceSubtitles":
-          this.removeSubtitles((data.body as ISocketDataRemoveRenderInstanceSubtitles).targets)
+          this.removeSubtitles((data.body).targets)
           break
         case "showRenderInstanceSubtitle":
-          this.show((data.body as ISocketDataShowRenderInstanceSubtitle).target)
+          this.show((data.body).target)
       }
     })
   }
 
   // initです。「initializeRenderInstance」を受け取ることで起動します。
-  public init(data: ISocketDataInitializeRenderInstance, root: HTMLElement) {
+  public init(data, root: HTMLElement) {
     if (this.initialized) return
     this.initialized = true
     this.options = data.options

@@ -6,7 +6,7 @@ import Vuex from "vuex"
 // import { newSocket } from "../../scripts/components/socket"
 import App from "./app.vue"
 import { I18n } from "./i18n"
-import { store } from "./store"
+import { Store } from "./store/"
 
 declare global {
   // tslint:disable-next-line: interface-name

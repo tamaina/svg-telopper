@@ -1,5 +1,6 @@
+
 (async () => {
-  console.info(`SVG Type Writer v${window.version} Setting App Boot`)
+  console.info(`SVG Telopper v${window.version} Setting App Boot`)
   let lang = ""
 
   if (window.langs.includes(navigator.language)) {
