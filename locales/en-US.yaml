@@ -1,14 +1,14 @@
 ---
 meta:
-  lang: "日本語"
+  lang: "English"
   divider: ""
 common:
   obs:
-    source: ソース
-    sources: ソース群
-    scene: シーン
-    scenes: シーン群
-    sceneCollection: シーンコレクション
-    sceneCollections: シーンコレクション群
-  renderInstance: 描画インスタンス
-  renderInstances: 描画インスタンス群
+    source: Source
+    sources: Sources
+    scene: Scene
+    scenes: Scenes
+    sceneCollection: Scene Collection
+    sceneCollections: Scene Collections
+  renderInstance: Render Instance
+  renderInstances: Render Instances
