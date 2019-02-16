@@ -24,7 +24,7 @@ const init = () => {
         width: rootRect.width
       },
       type: "renderInstanceInfo"
-    } as ISocketData, socket.socket)
+    })
   })
 
   document.title = `SVG Telopper!: render#${renderInstanceId}`

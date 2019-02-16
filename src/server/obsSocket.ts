@@ -1,28 +1,41 @@
+import * as colors from "colors"
 import * as log from "fancy-log"
 import * as OBSWebSocket from "obs-websocket-js"
-import { STServer } from "."
+import { server } from "."
 import { config } from "../config"
 import { ISocketBroadData } from "../models/socketData"
-import { broadcast } from "./broadcast"
 import db from "./db"
 
-export const obsSocket = (server: STServer) => {
+export const obsSocket = () => {
   const obs = new OBSWebSocket()
   log("OBSのWebSocketに接続します...")
   log(config.obs)
 
-  const broadcastData = (data: { [key: string]: any }) => {
-    broadcast({
-      body: data,
-      type: "obsRecievedData"
-    } as ISocketBroadData, server.ws)
+  const reconnect = (info: string) => {
+    log(info.red)
+    obs.disconnect()
+    db.obsSources.remove({}, { multi: true })
+    if (server.obs) {
+      setTimeout(obsSocket, 20000)
+      server.obs = null
+    }
   }
 
-  const obsInit = async () => {
-    const [ { scName }, sceneList, sourcesList ] = await Promise.all([
+  const broadcastData = (data: { [key: string]: any }) => {
+    server.broadcastData({
+      body: data,
+      type: "obsRecievedData"
+    } as ISocketBroadData)
+  }
+
+  const updateObs = async () => {
+    db.renewObs()
+
+    const [ { scName }, sceneList, sourcesList, studioModeStatus ] = await Promise.all([
       obs.send("GetCurrentSceneCollection"),
       obs.send("GetSceneList"),
-      obs.send("GetSourcesList")
+      obs.send("GetSourcesList"),
+      obs.send("GetStudioModeStatus")
     ])
     const scenes = sceneList.scenes.map(e => e.name)
 
@@ -43,7 +56,7 @@ export const obsSocket = (server: STServer) => {
       for (const source of scene.sources) {
         updates.push(db.obsSources.update(
           { name: source.name },
-          { $push: { scenes: scene.name } },
+          { $addToSet: { scenes: scene.name } },
           {}
         ))
       }
@@ -56,42 +69,71 @@ export const obsSocket = (server: STServer) => {
     for (let i = 0; i < groups.length; i += 1) {
       updates.push(db.obsSources.update(
         { name: groups[i].name },
-        { $addToSet: { children: { $each: ((groupSettings[i] as any).sourceSettings).items.map(e => e.name) }} }
+        { $addToSet: { children: { $each: ((groupSettings[i] as any).sourceSettings).items.map(e => e.name) }} },
+        {}
       ))
     }
 
-    server.obsInfo = { scName, scenes }
-    broadcastData(Object.assign({ type: "obsDataFullChanged" }, server.obsInfo))
+    const scenePreviewing = studioModeStatus.studioMode ? (await obs.send("GetPreviewScene")).name : null
 
-    return Promise.all(updates)
+    server.obsInfo = {
+      scName,
+      scenes,
+      currentScene: sceneList.currentScene,
+      scenePreviewing
+    }
+    broadcastData({ type: "obsInfo", obsInfo: server.obsInfo })
+
+    await Promise.all(updates)
+
+// tslint:disable-next-line: max-line-length
+    if (process.env.NODE_ENV === "development") log(`ObsInfo: シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
   }
 
-  obs.on("PreviewSceneChanged", data => broadcastData(data))
-  obs.on("SwitchScenes", data => broadcastData(data))
+  const doUpdateObs = () => {
+    updateObs()
+    .catch(() => {
+      reconnect("OBSのWebSocketからの情報の取得に失敗しました。20秒後に再接続を試みます。")
+    })
+  }
+
+  obs.on("PreviewSceneChanged", data => {
+    server.obsInfo.scenePreviewing = data.sceneName
+    broadcastData(data)
+  })
+  obs.on("SwitchScenes", data => {
+    server.obsInfo.currentScene = data.sceneName
+    broadcastData(data)
+  })
+  obs.on("SceneCollectionChanged", () => {
+    doUpdateObs()
+  })
+  obs.on("StudioModeSwitched", data => {
+    if (data.newState) {
+      obs.send("GetPreviewScene")
+      .then(ps => {
+        server.obsInfo.scenePreviewing = ps.name
+      })
+    } else {
+      server.obsInfo.scenePreviewing = null
+    }
+  })
+
   obs.on("Exiting", () => {
-    log("OBSのWebSocketが切断されました。20秒後に再接続を試みます。")
-    obs.disconnect()
-    db.obsSources.remove({}, { multi: true })
-    server.obs = null
-    setTimeout(obsSocket.bind(null, server), 20000)
+    reconnect("OBSのWebSocketが切断されました。")
   })
 
   obs.connect(config.obs)
     .then(async () => {
       log("OBSのWebsocketへの接続に成功しました。")
       server.obs = obs
-      await Promise.all([
-        db.obsScenes.remove({}),
-        db.obsSources.remove({})
-      ])
-      return await obsInit()
+      return await updateObs()
     }, err => {
       throw new Error(err)
     })
     .then(async () => {
-      log("OBSから情報を取得しました。")
-// tslint:disable-next-line: max-line-length
-      log(`シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
+      setInterval(doUpdateObs, 1000)
+
       obs.send("SetHeartbeat", { enable: true }, err => {
         if (err) {
           log(err)
@@ -101,21 +143,14 @@ export const obsSocket = (server: STServer) => {
           last = new Date()
           setTimeout(() => {
             if ((new Date()).getTime() - last.getTime() > 4000) {
-              log("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
-              obs.disconnect()
-              db.obsSources.remove({}, { multi: true })
-              server.obs = null
-              setTimeout(obsSocket.bind(null, server), 20000)
+              reconnect("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
             }
           }, 5000)
         })
       })
     })
     .catch(err => { // Promise convention dicates you have a catch on every chain.
-      log("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
       log(err)
-      server.obs = null
-      db.obsSources.remove({}, { multi: true })
-      setTimeout(obsSocket.bind(null, server), 20000)
+      reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
     })
 }

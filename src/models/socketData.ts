@@ -4,20 +4,34 @@ export interface ISocketData {
         "response" |
         "renderInstanceInfo" |
         "obsRecievedData" |
-        "obsRequestData"
+        "obsRequestData" |
+        "message" |
+        "update"
   body: {
     [ key: string ]: any
     type: string
     t?: number
-  }
+  },
+  instance?: string
 }
 
 export interface ISocketBroadData extends ISocketData {
   type: "renderInstanceInfo" |
-        "obsRecievedData"
+        "obsRecievedData" |
+        "message" |
+        "update"
   body: {
     [ key: string ]: any
     type: string
+  }
+}
+
+export interface ISocketMessageData extends ISocketBroadData {
+  type: "message"
+  body: {
+    type: "info" | "error" | "warn"
+    comment: string
+    data: any
   }
 }
 
@@ -27,8 +41,8 @@ export interface ISocketRequestData extends ISocketData {
   body: {
     [ key: string ]: any
     type: string
-    instance: string
-  }
+  },
+  instance: string
 }
 
 export interface ISocketResponseData extends ISocketData {
@@ -36,6 +50,6 @@ export interface ISocketResponseData extends ISocketData {
   body: {
     [ key: string ]: any
     type: string
-    instance: string
   }
+  instance: string
 }

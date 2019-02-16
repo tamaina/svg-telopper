@@ -4,11 +4,22 @@ import { IEndpointInfo } from "../../operations"
 
 export const meta = {
   description: {
-    "ja-JP": "OBS"
+    "ja-JP": "OBSの現在の状況を返答します。"
   },
-  params: {}
+  params: {},
+  res: {
+    type: "object",
+    props: {
+      obsInfo: {
+        type: "IObsInfo",
+        desc: {
+          "ja-JP": "IObsInfo"
+        }
+      }
+    }
+  }
 } as IEndpointInfo
 
-export default async (server: STServer, request: ISocketRequestData) => Object.assign(
-    { type: "obsDataFullChanged" }, server.obsInfo || { null: null }
-  )
+export default async (server: STServer, request: ISocketRequestData) => {
+  return  { type: "obsInfo", obsInfo: server.obsInfo}
+}

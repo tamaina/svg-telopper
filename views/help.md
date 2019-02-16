@@ -3,13 +3,6 @@ SVG Telopper
 おめでとうございます！  
 ブラウザでこの文章が見られているので、サーバーは立ち上がっています。
 
-以下のページにアクセスして始めてください！
+`/setting`にアクセスして始めてください！
 
-# ページ一覧
-## `/render(#:renderInstanceId)`
-OBS側で表示するページです。
-
-「#」でIDを指定すると、renderInstanceId(描画インスタンスのID)を指定できます。
-
-## `/setting`
-設定画面です。
+ABOUT THIS APP: https://tamaina.github.io/products/svg-telopper/v2.0/

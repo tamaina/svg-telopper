@@ -94,8 +94,7 @@ export class STW {
     } else {
       this.subtitles.push(subtitle)
     }
-/*
-    switch (subtitle.getElementsByTagName("text").item(0).style.textAnchor) {
+    switch (query.anchor) {
       case "start":
         subtitle.style.transformOrigin = "left"
         break
@@ -103,11 +102,10 @@ export class STW {
         subtitle.style.transformOrigin = "right"
         break
       case "middle":
-      default:
         subtitle.style.transformOrigin = "center"
         break
       }
-
+/*
     const clientBcr = this.client.getBoundingClientRect()
 
     subtitle.children.item(0).classList.add("show")

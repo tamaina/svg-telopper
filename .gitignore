@@ -1,2 +1,5 @@
 node_modules
 built
+datastore/db/data/obsScenes.nedb
+datastore/db/data/obsSources.nedb
+datastore/db/data/renderInstances.nedb
