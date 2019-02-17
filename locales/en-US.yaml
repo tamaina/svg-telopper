@@ -12,3 +12,7 @@ common:
     sceneCollections: Scene Collections
   renderInstance: Render Instance
   renderInstances: Render Instances
+app:
+  obs-not-connected:
+components/navbar:
+  not-in-scene:
