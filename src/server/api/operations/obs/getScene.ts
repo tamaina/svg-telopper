@@ -1,6 +1,6 @@
 import $ from "cafy"
 
-import { server } from "../../.."
+import { STServer } from "../../.."
 import { ISocketRequestData } from "../../../../models/socketData"
 import { IEndpointInfo } from "../../operations"
 
@@ -29,7 +29,7 @@ export const meta = {
   }
 } as IEndpointInfo
 
-export default async (request: ISocketRequestData) => {
+export default async (server: STServer, request: ISocketRequestData) => {
   if (!server.obsInfo) return { type: "obsInfo", obsInfo: server.obsInfo }
 
   const sources = await Promise.all(

@@ -1,3 +1,4 @@
+import $ from "cafy"
 import ReconnectingWebSocket from "reconnecting-websocket"
 import { ISocketData } from "../../models/socketData"
 import { getUniqueStr } from "./getUniqueStr"
@@ -14,13 +15,13 @@ export class Socket {
   public pass(data: ISocketData) {
     this.socket.send(JSON.stringify(data))
   }
-  public request(req: any) {
+  public request(req: any, type: "request" | "obsRequestData" = "request") {
     return new Promise (resolve => {
       const instance = getUniqueStr()
 
       const socket = this
       const listener = (ev: MessageEvent) => {
-        if (ev.type !== "utf8") return
+        if (!$.str.ok(ev.data)) return
         const data = JSON.parse(ev.data) as ISocketData
         if (data.type !== "response" || data.instance !== instance) return
         socket.socket.removeEventListener("message", listener)
@@ -30,9 +31,15 @@ export class Socket {
 
       this.pass({
         body: req,
-        type: "request",
+        type,
         instance
       })
     })
+  }
+  public sendToObs(type: string, option?: any) {
+    return this.request({
+      type,
+      option
+    }, "obsRequestData")
   }
 }

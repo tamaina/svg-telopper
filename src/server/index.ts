@@ -21,18 +21,17 @@ export class STServer {
     log(`SVG Telopper v${pkg.version} Server Starting...`)
 
     this.httpServer = createServer(app.callback())
-    socket()
+    socket(this)
     this.httpServer.listen(config.port)
     log(`サーバーを開始しました。${config.url.green}`)
-    obsSocket()
+    obsSocket(this)
   }
 
   public broadcastData(data: ISocketBroadData) {
     this.ws.broadcast(JSON.stringify(data))
-    return
   }
 
-  public message(comment: string, type: "info" | "error" | "warn", data: any) {
+  public message(comment: string, type: "info" | "error" | "warn", data?: any) {
     this.broadcastData({
       type: "message",
       body: {

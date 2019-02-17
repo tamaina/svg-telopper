@@ -1,5 +1,6 @@
 const { join } = require("path")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
+const VuetifyLoaderPlugin = require("vuetify-loader/lib/plugin")
 
 module.exports = {
   entry: {
@@ -13,8 +14,8 @@ module.exports = {
     publicPath: "/assets/"
   },
   resolve: {
-    extensions: [".ts", ".tsx", ".js", ".vue", ".vuex"],
-    modules: ["node_modules"],  
+    extensions: [".ts", ".tsx", ".js", ".vue", ".vuex", ".styl"],
+    modules: ["node_modules"],
     alias: {
       vue: "vue/dist/vue.js"
     }
@@ -60,6 +61,10 @@ module.exports = {
         ]
       },
       {
+        test: /\.styl$/,
+        loader: "style-loader!css-loader!stylus-loader"
+      },
+      {
         test: /\.css$/,
         use: [
           "vue-style-loader",
@@ -72,7 +77,8 @@ module.exports = {
     ]
   },
   plugins: [
-    new VueLoaderPlugin()
+    new VueLoaderPlugin(),
+    new VuetifyLoaderPlugin()
   ],
   mode: "production"
 }

@@ -1,29 +1,21 @@
-import { Scene } from "obs-websocket-js"
+import * as nestedProperty from "nested-property"
 import Vuex from "vuex"
 import createPersistedState from "vuex-persistedstate"
-import { IObsInfo } from "../../../models/obs"
 import { Socket } from "../../scripts/socket"
+import ObsInfo from "./obsInfo"
 
-export interface IStoreState {
-  obsInfo: IObsInfo,
-  renderInstances: IRenderInstanceSetting[]
-}
+export const Store = (socket: Socket) => {
+  const [ obsInfo ] = [ ObsInfo(socket) ]
 
-export interface IRenderInstanceSetting {
-  renderInstanceId: string
-  connections: Array<{ width: number, height: number }>
-}
-
-export const Store = (socket: Socket) => new Vuex.Store({
-  plugins: [createPersistedState()],
-  state: {
-    obsInfo: null,
-    renderInstances: [],
-    sources: []
-  } as IStoreState,
-  mutations: {
-    renewObsInfo(state, obsInfo: IObsInfo) {
-      state.obsInfo = obsInfo
+  return new Vuex.Store({
+    plugins: [createPersistedState()],
+    state: {
+      hoge: "fuga"
+    },
+    mutations: {
+    },
+    modules: {
+      obsInfo
     }
-  }
-})
+  })
+}

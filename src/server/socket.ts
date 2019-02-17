@@ -2,12 +2,13 @@ import * as log from "fancy-log"
 import * as websocket from "websocket"
 import db from "./db"
 
-import { server } from "."
+import { STServer } from "."
 import { IQuery } from "../models/queries"
 import { ISocketData, ISocketRequestData } from "../models/socketData"
 import operations from "./api/operations"
 
 const onRenderInstanceConnected = async (
+    server: STServer,
     connection: websocket.connection,
     rdata: websocket.IMessage,
     data: ISocketData
@@ -21,7 +22,7 @@ const onRenderInstanceConnected = async (
   } else {
     const onePreset = await db.presets.findOne({})
     if (!onePreset) {
-
+      server.message("まずはプリセットを登録しましょう！", "warn")
       return
     }
     db.renderInstances.insert({
@@ -64,7 +65,7 @@ const onRenderInstanceConnected = async (
   connection.on("error", renderInstanceDied)
 }
 
-export const socket = () => {
+export const socket = (server: STServer) => {
   server.ws = new websocket.server({
     httpServer: server.httpServer
   })
@@ -99,23 +100,64 @@ export const socket = () => {
           case "renderInstanceInfo":
             switch (data.body.type) {
               case "registerRenderInstance":
-                onRenderInstanceConnected(connection, rdata, data)
+                onRenderInstanceConnected(server, connection, rdata, data)
                 break
               default:
                 server.ws.broadcast(rdata.utf8Data)
             }
+            break
           case "request":
             const operation = operations.find(e => e.name === data.body.type)
-            operation.exec(data as ISocketRequestData)
-            .then(res => {
+
+            const operationErrored = e => {
+              log.error(`Error!: @${data.body.type}`)
+              log.error(e)
               connection.send(JSON.stringify(
                 {
                   type: "response",
                   instance: data.instance,
-                  body: res
+                  body: {
+                    type: "error",
+                    data: e
+                  }
+                }
+              ))
+            }
+
+            if (!operation) {
+              operationErrored("Operation not found")
+              break
+            }
+            try {
+              operation.exec(server, data as ISocketRequestData)
+              .then(res => {
+                connection.send(JSON.stringify(
+                  {
+                    type: "response",
+                    instance: data.instance,
+                    body: res
+                  }
+                ))
+              }, operationErrored)
+            } catch (e) {
+              operationErrored(e)
+            }
+            break
+          case "obsRequestData":
+            server.obs.send(data.body.type as "GetTransitionDuration", data.body.option)
+            .then(res => {
+              connection.send(JSON.stringify(
+                {
+                  type: "obsResponseData",
+                  body: {
+                    type: data.body.type,
+                    res
+                  },
+                  instance: data.instance
                 }
               ))
             })
+            break
           default:
             server.ws.broadcast(rdata.utf8Data)
             break

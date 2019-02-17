@@ -1,6 +1,6 @@
 import $ from "cafy"
 
-import { server } from "../../.."
+import { STServer } from "../../.."
 import { ISocketRequestData } from "../../../../models/socketData"
 import db from "../../../db"
 import { IEndpointInfo } from "../../operations"
@@ -30,7 +30,7 @@ export const meta = {
   }
 } as IEndpointInfo
 
-export default async (request: ISocketRequestData) => {
+export default async (server: STServer, request: ISocketRequestData) => {
   if (await db.presets.findOne({ renderInstanceId: request.body.renderInstanceId }).connectionCount > 0) {
     return { type: "success", success: "ng" }
   }

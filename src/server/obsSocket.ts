@@ -1,12 +1,12 @@
 import * as colors from "colors"
 import * as log from "fancy-log"
 import * as OBSWebSocket from "obs-websocket-js"
-import { server } from "."
+import { STServer } from "."
 import { config } from "../config"
 import { ISocketBroadData } from "../models/socketData"
 import db from "./db"
 
-export const obsSocket = () => {
+export const obsSocket = (server: STServer) => {
   const obs = new OBSWebSocket()
   log("OBSのWebSocketに接続します...")
   log(config.obs)
@@ -17,13 +17,25 @@ export const obsSocket = () => {
     db.obsSources.remove({}, { multi: true })
     if (server.obs) {
       setTimeout(obsSocket, 20000)
+      const i = server.obs
       server.obs = null
+      server.obsInfo = {
+        connected: false,
+        scName: null,
+        scenes: [],
+        currentScene: null,
+        scenePreviewing: null,
+        studioMode: false
+      }
     }
   }
 
-  const broadcastData = (data: { [key: string]: any }) => {
+  const broadcastData = (type: string, data: { [key: string]: any }) => {
     server.broadcastData({
-      body: data,
+      body: {
+        data,
+        type
+      },
       type: "obsRecievedData"
     } as ISocketBroadData)
   }
@@ -31,7 +43,7 @@ export const obsSocket = () => {
   const updateObs = async () => {
     db.renewObs()
 
-    const [ { scName }, sceneList, sourcesList, studioModeStatus ] = await Promise.all([
+    const [ { scName }, sceneList, sourcesList, { studioMode } ] = await Promise.all([
       obs.send("GetCurrentSceneCollection"),
       obs.send("GetSceneList"),
       obs.send("GetSourcesList"),
@@ -74,15 +86,17 @@ export const obsSocket = () => {
       ))
     }
 
-    const scenePreviewing = studioModeStatus.studioMode ? (await obs.send("GetPreviewScene")).name : null
+    const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList.currentScene
 
     server.obsInfo = {
+      connected: true,
       scName,
       scenes,
       currentScene: sceneList.currentScene,
-      scenePreviewing
+      scenePreviewing,
+      studioMode
     }
-    broadcastData({ type: "obsInfo", obsInfo: server.obsInfo })
+    server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo: server.obsInfo }})
 
     await Promise.all(updates)
 
@@ -99,22 +113,25 @@ export const obsSocket = () => {
 
   obs.on("PreviewSceneChanged", data => {
     server.obsInfo.scenePreviewing = data.sceneName
-    broadcastData(data)
+    broadcastData("PreviewSceneChanged", data)
   })
   obs.on("SwitchScenes", data => {
     server.obsInfo.currentScene = data.sceneName
-    broadcastData(data)
+    broadcastData("SwitchScenes", data)
   })
   obs.on("SceneCollectionChanged", () => {
     doUpdateObs()
   })
   obs.on("StudioModeSwitched", data => {
     if (data.newState) {
+      server.obsInfo.studioMode = true
+      broadcastData("StudioModeSwitched", data)
       obs.send("GetPreviewScene")
       .then(ps => {
         server.obsInfo.scenePreviewing = ps.name
       })
     } else {
+      server.obsInfo.studioMode = false
       server.obsInfo.scenePreviewing = null
     }
   })

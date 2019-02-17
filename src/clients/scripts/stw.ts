@@ -23,7 +23,7 @@ export class STW {
     this.renderInstanceId = renderInstanceId
 
     socket.addEventListener("message", ev => {
-      if (ev.type !== "utf8") return
+      if (!$.str.ok(ev.data)) return
       const data = JSON.parse(ev.data) as ISocketData
       if (data.body && data.body.renderInstanceId && data.body.renderInstanceId !== renderInstanceId) return
       switch (data.body.type) {

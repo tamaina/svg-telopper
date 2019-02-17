@@ -1,6 +1,7 @@
 import { Context } from "cafy"
 import * as glob from "glob"
 import { resolve } from "path"
+import { STServer } from ".."
 import { ISocketRequestData } from "../../models/socketData"
 
 export interface IEndpointInfo {
@@ -18,9 +19,11 @@ export interface IEndpointInfo {
   res: any
 }
 
+export type operater = (server: STServer, request: ISocketRequestData) => Promise<{ [ key: string ]: any }>
+
 interface IEndpoint {
   name: string
-  exec: (request: ISocketRequestData) => Promise<{ [ key: string ]: any }>
+  exec: operater
   info: IEndpointInfo
 }
 
@@ -32,7 +35,7 @@ const endpoints: IEndpoint[] = files.map(f => {
   const ep = require(`./operations/${f}`)
 
   return {
-    exec: ep.default as (request: ISocketRequestData) => Promise<{ [ key: string ]: any }>,
+    exec: ep.default as operater,
     meta: ep.meta || {},
     name: f.replace(".js", "")
   }

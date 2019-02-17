@@ -20,7 +20,7 @@ new Pug({
     langs,
     pkg,
     require,
-    salt: process.env.NODE_ENV === "development" ? salt() : ""
+    salt: process.env.NODE_ENV !== "production" ? salt() : ""
   },
   viewPath: `${__dirname}/../../views`
 })

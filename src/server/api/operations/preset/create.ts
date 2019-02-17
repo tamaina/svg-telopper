@@ -1,6 +1,6 @@
 import $ from "cafy"
 
-import { server } from "../../.."
+import { STServer } from "../../.."
 import { ISocketRequestData } from "../../../../models/socketData"
 import db from "../../../db"
 import { IEndpointInfo } from "../../operations"
@@ -36,7 +36,7 @@ export const meta = {
   }
 } as IEndpointInfo
 
-export default async (request: ISocketRequestData) => {
+export default async (server: STServer, request: ISocketRequestData) => {
   const inserted = await db.presets.insert(
     request.body.query
   )

@@ -13,9 +13,9 @@ html(lang="ja")
         | var nodeEnv = "#{env}";
       block locale
         | var langs = !{langs};
-    script(src="./assets/setting-boot.js")
+    script(src=`./assets/setting-boot.js?${pkg.version}${salt}`)
     link(href='https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900|Material+Icons' rel="stylesheet")
-    script(src="./assets/setting.js" defer)
+    script(src=`./assets/setting.js?${pkg.version}${salt}` defer)
 
   body
     noscript
