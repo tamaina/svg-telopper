@@ -10,9 +10,12 @@ common:
     scenes: Scenes
     sceneCollection: Scene Collection
     sceneCollections: Scene Collections
-  renderInstance: Render Instance
-  renderInstances: Render Instances
+    renderInstance: 描画インスタンス
+    renderInstances: 描画インスタンス群
+  words:
+    preset: プリセット
+    query: クエリ
 app:
-  obs-not-connected:
-components/navbar:
-  not-in-scene:
+  obs-not-connected: OBS未接続
+components/scene-list:
+  not-in-scene: 野良
