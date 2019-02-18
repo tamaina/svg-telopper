@@ -1,5 +1,7 @@
-export type IQueries = IQuery[]
-
+export interface ISTWOptions {
+  queries: string[]
+  reverse?: boolean
+}
 export interface IQuery {
   presetId?: string
   name?: string
@@ -9,9 +11,17 @@ export interface IQuery {
   replace: string[]
   interval: number
   class: string
-  reverse: boolean
   stretch: boolean
-  insertBefore: number
   function: string
   anchor: "start" | "end" | "middle"
+}
+
+export interface IPresetQuery extends IQuery {
+  presetName: string
+  _id: string
+}
+
+export interface IRenderInstanceQuery extends IQuery {
+  presetId: string
+  _id: string
 }

@@ -31,11 +31,11 @@ export const meta = {
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
-  if (await db.presets.findOne({ renderInstanceId: request.body.renderInstanceId }).connectionCount > 0) {
+  if (await db.renderInstances.findOne({ renderInstanceId: request.body.renderInstanceId }).connectionCount > 0) {
     return { type: "success", success: "ng" }
   }
 
-  db.presets.remove(
+  db.renderInstances.remove(
     { renderInstanceId: request.body.renderInstanceId }
   )
   server.broadcastData({

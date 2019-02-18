@@ -25,23 +25,29 @@ export const meta = {
         desc: {
           "ja-JP": "成功"
         }
+      },
+      _id: {
+        type: "_id",
+        desc: {
+          "ja-JP": "データベースのID"
+        }
       }
     }
   }
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
+  const inserted = await db.queries.insert(
+    request.body.query
+  )
+
   server.broadcastData({
     type: "update",
     body: {
-      type: "presetUpdated",
-      query: await db.presets.update(
-        { _id: request.body.query._id },
-        { $set: request.body.query },
-        { returnUpdatedDocs: true }
-      )
+      type: "presetCreated",
+      query: inserted
     }
   })
 
-  return  { type: "success", success: "ok" }
+  return  { type: "success", success: "ok", _id: inserted._id }
 }

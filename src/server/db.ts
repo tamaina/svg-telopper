@@ -2,15 +2,15 @@ import * as Nedb from "nedb-promises"
 import { config } from "../config"
 
 class Db {
-  public presets: Nedb
+  public queries: Nedb
   public renderInstances: Nedb
   public obsSources: Nedb
   public obsScenes: Nedb
 
   constructor() {
-    this.presets = new Nedb({
+    this.queries = new Nedb({
       autoload: true,
-      filename: `${__dirname}/../../datastore/db/${config.db}/presets.nedb`
+      filename: `${__dirname}/../../datastore/db/${config.db}/queries.nedb`
     })
     this.renderInstances = new Nedb({
       autoload: true,

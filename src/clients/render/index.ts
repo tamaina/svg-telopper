@@ -11,7 +11,7 @@ const init = () => {
 
   location.hash = `#${renderInstanceId}`
 
-  new STW(document.body, renderInstanceId, socket.socket)
+  new STW(document.body, renderInstanceId, socket)
 
   const rootRect = document.body.getBoundingClientRect()
 

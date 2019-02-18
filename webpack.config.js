@@ -1,6 +1,7 @@
 const { join } = require("path")
 const VueLoaderPlugin = require("vue-loader/lib/plugin")
 const VuetifyLoaderPlugin = require("vuetify-loader/lib/plugin")
+const { resolve } = require("path")
 
 module.exports = {
   entry: {
@@ -61,8 +62,13 @@ module.exports = {
         ]
       },
       {
-        test: /\.styl$/,
-        loader: "style-loader!css-loader!stylus-loader"
+        test: /\.styl(us)?$/,
+        use: [
+          "vue-style-loader",
+          "style-loader",
+          "css-loader",
+          "stylus-loader"
+        ]
       },
       {
         test: /\.css$/,

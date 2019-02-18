@@ -31,7 +31,7 @@ export const meta = {
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
-  db.presets.remove(
+  db.queries.remove(
     { _id: request.body.presetId }
   )
   server.broadcastData({

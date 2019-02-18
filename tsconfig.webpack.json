@@ -5,6 +5,8 @@
         "moduleResolution": "node",
         "module": "esnext",
         "lib": ["dom", "es6"],
-        "types": ["node"]
-    }
+        "types": ["node"],
+        "esModuleInterop": true
+    },
+    "exclude": ["src/server"]
 }

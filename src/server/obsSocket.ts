@@ -12,7 +12,7 @@ export const obsSocket = (server: STServer) => {
   log(config.obs)
 
   const reconnect = (info: string) => {
-    log(info.red)
+    log(colors.red(info))
     obs.disconnect()
     db.obsSources.remove({}, { multi: true })
     if (server.obs) {
@@ -54,6 +54,7 @@ export const obsSocket = (server: STServer) => {
     await db.obsSources.insert((sourcesList.sources as any[]).map(e => {
       return {
         scenes: [],
+        groups: [],
         children: [],
         name: e.name,
         type: e.typeId
@@ -79,11 +80,17 @@ export const obsSocket = (server: STServer) => {
       return obs.send("GetSourceSettings", { sourceName: e.name })
     }))
     for (let i = 0; i < groups.length; i += 1) {
+      const children = ((groupSettings[i] as any).sourceSettings).items.map(e => e.name)
       updates.push(db.obsSources.update(
         { name: groups[i].name },
-        { $addToSet: { children: { $each: ((groupSettings[i] as any).sourceSettings).items.map(e => e.name) }} },
+        { $addToSet: { children: { $each: children }} },
         {}
       ))
+      updates.push(...children.map(e => db.obsScenes.update(
+        { name: e },
+        { $addToSet: { groups: { $each: groups[i].name }} },
+        {}
+      )))
     }
 
     const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList.currentScene
@@ -140,14 +147,19 @@ export const obsSocket = (server: STServer) => {
     reconnect("OBSのWebSocketが切断されました。")
   })
 
+  const onError = err => { // Promise convention dicates you have a catch on every chain.
+    log(err)
+    reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
+  }
+
   obs.connect(config.obs)
-    .then(async () => {
+    .then(() => {
       log("OBSのWebsocketへの接続に成功しました。")
       server.obs = obs
+    }, onError)
+    .then(async () => {
       return await updateObs()
-    }, err => {
-      throw new Error(err)
-    })
+    }, onError)
     .then(async () => {
       setInterval(doUpdateObs, 1000)
 
@@ -165,9 +177,5 @@ export const obsSocket = (server: STServer) => {
           }, 5000)
         })
       })
-    })
-    .catch(err => { // Promise convention dicates you have a catch on every chain.
-      log(err)
-      reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
-    })
+    }, onError)
 }

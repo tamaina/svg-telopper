@@ -20,7 +20,7 @@ const onRenderInstanceConnected = async (
   if (await db.renderInstances.findOne({ renderInstanceId })) {
     db.renderInstances.update({ renderInstanceId }, { $inc: { connectionCount: 1 } }, { upsert: true })
   } else {
-    const onePreset = await db.presets.findOne({})
+    const onePreset = await db.queries.findOne({})
     if (!onePreset) {
       server.message("まずはプリセットを登録しましょう！", "warn")
       return
@@ -28,21 +28,7 @@ const onRenderInstanceConnected = async (
     db.renderInstances.insert({
       renderInstanceId,
       options: {
-        queries: [
-          {
-            presetId: onePreset._id,
-            text: null,
-            innerHtml: null,
-            replace: null,
-            interval: null,
-            class: null,
-            reverse: null,
-            stretch: null,
-            insertBefore: null,
-            function: null,
-            anchor: null
-          } as IQuery
-        ],
+        queries: [onePreset._id],
         reverse: false,
         stretch: false
       },
@@ -88,79 +74,83 @@ export const socket = (server: STServer) => {
         const data = JSON.parse(rdata.utf8Data) as ISocketData
 
         switch (data.type) {
-          case "ping":
-            connection.send(JSON.stringify({
-              body: {
-                t: (new Date()).getTime(),
-                type: "ping"
-              },
+        case "ping":
+          connection.send(JSON.stringify({
+            body: {
+              t: (new Date()).getTime(),
               type: "ping"
-            } as ISocketData))
-            break
-          case "renderInstanceInfo":
-            switch (data.body.type) {
-              case "registerRenderInstance":
-                onRenderInstanceConnected(server, connection, rdata, data)
-                break
-              default:
-                server.ws.broadcast(rdata.utf8Data)
-            }
-            break
-          case "request":
-            const operation = operations.find(e => e.name === data.body.type)
+            },
+            type: "ping"
+          } as ISocketData))
+          break
 
-            const operationErrored = e => {
-              log.error(`Error!: @${data.body.type}`)
-              log.error(e)
+        case "renderInstanceInfo":
+          switch (data.body.type) {
+          case "registerRenderInstance":
+            onRenderInstanceConnected(server, connection, rdata, data)
+            break
+          default:
+            server.ws.broadcast(rdata.utf8Data)
+          }
+          break
+
+        case "request":
+          const operation = operations.find(e => e.name === data.body.type)
+
+          const operationErrored = e => {
+            log.error(`Error!: @${data.body.type}`)
+            log.error(e)
+            connection.send(JSON.stringify(
+              {
+                type: "response",
+                instance: data.instance,
+                body: {
+                  type: "error",
+                  data: e
+                }
+              }
+            ))
+          }
+
+          if (!operation) {
+            operationErrored("Operation not found")
+            break
+          }
+          try {
+            operation.exec(server, data as ISocketRequestData)
+            .then(res => {
               connection.send(JSON.stringify(
                 {
                   type: "response",
                   instance: data.instance,
-                  body: {
-                    type: "error",
-                    data: e
-                  }
+                  body: res
                 }
               ))
-            }
+            }, operationErrored)
+          } catch (e) {
+            operationErrored(e)
+          }
+          break
 
-            if (!operation) {
-              operationErrored("Operation not found")
-              break
-            }
-            try {
-              operation.exec(server, data as ISocketRequestData)
-              .then(res => {
-                connection.send(JSON.stringify(
-                  {
-                    type: "response",
-                    instance: data.instance,
-                    body: res
-                  }
-                ))
-              }, operationErrored)
-            } catch (e) {
-              operationErrored(e)
-            }
-            break
-          case "obsRequestData":
-            server.obs.send(data.body.type as "GetTransitionDuration", data.body.option)
-            .then(res => {
-              connection.send(JSON.stringify(
-                {
-                  type: "obsResponseData",
-                  body: {
-                    type: data.body.type,
-                    res
-                  },
-                  instance: data.instance
-                }
-              ))
-            })
-            break
-          default:
-            server.ws.broadcast(rdata.utf8Data)
-            break
+        case "obsRequestData":
+          server.obs.send(data.body.type as "GetTransitionDuration", data.body.option)
+          .then(res => {
+            connection.send(JSON.stringify(
+              {
+                type: "obsResponseData",
+                body: {
+                  type: data.body.type,
+                  res
+                },
+                instance: data.instance
+              }
+            ))
+          })
+          break
+
+        default:
+          server.ws.broadcast(rdata.utf8Data)
+          break
         }
       }
     })
