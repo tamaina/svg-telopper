@@ -18,4 +18,15 @@ common:
 app:
   obs-not-connected: OBS未接続
 components/scene-list:
-  not-in-scene: 野良
+  not-in-scene: 未分類
+components/query-list:
+  no-name: (名称なし)
+components/query-editor:
+  empty: 編集するものはありません。
+  new-query: 新しいクエリ
+  nothing: 何もありません
+  replacer-text: 置き換え対象
+  replacing-text: 文字列
+  save: 保存
+  save-preset: 登録
+  preset-name: プリセット名
