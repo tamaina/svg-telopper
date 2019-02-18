@@ -154,6 +154,7 @@ export class STW {
     el.attachShadow({mode: "open"})
     el.dataset.id = query._id
     el.dataset.presetId = query.presetId
+    el.dataset.timeout = query.timeout ? `${query.timeout}` : null
 
     const ibTest = $.num.min(0).max(this.client.childElementCount - 1).ok(insertBefore)
     const subtitle = (() => {
@@ -225,14 +226,17 @@ export class STW {
   }
 
   public show(target: number) {
-    if ($.num.max(this.subtitles.length - 1).min(-1)) throw new Error("ターゲットの数値が不正か、このインスタンスには何もありません。")
-    this.showing = target
+    if (this.subtitles.length <= 1) return
+    this.showing = target % this.subtitles.length
     for (let i = 0; i < this.subtitles.length; i += 1) {
       const subtitle = this.subtitles[i]
-      if (i === target) {
+      if (i === this.showing) {
+        subtitle.classList.add("show")
         for (const item of Array.from(subtitle.children)) item.classList.add("show")
         subtitle.style.zIndex = String(1 * (this.options.reverse ? -1 : 1))
+        if (subtitle.dataset.timeout) setTimeout(this.show.bind(this, i + 1), Number(subtitle.dataset.timeout))
       } else {
+        subtitle.classList.remove("show")
         for (const item of Array.from(subtitle.children)) item.classList.remove("show")
         subtitle.style.zIndex = String(1 * (this.options.reverse ? 1 : -1))
       }

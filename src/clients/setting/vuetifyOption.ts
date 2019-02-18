@@ -2,8 +2,13 @@ import colors from "vuetify/es5/util/colors"
 
 import {
   VApp,
+  VBtn,
   VCard,
+  VContainer,
+  VContent,
   VFlex,
+  VForm,
+  VInput,
   VLayout,
   VList,
   VListTile,
@@ -11,6 +16,9 @@ import {
   VListTileTitle,
   VRadio,
   VRadioGroup,
+  VTab,
+  VTabItem,
+  VTabs,
   VToolbar,
   VToolbarTitle
 } from "vuetify/lib/components"
@@ -21,8 +29,13 @@ export default {
   iconfont: "faSvg",
   components: {
     VApp,
+    VBtn,
     VCard,
+    VContainer,
+    VContent,
     VFlex,
+    VForm,
+    VInput,
     VLayout,
     VList,
     VListTile,
@@ -30,6 +43,9 @@ export default {
     VListTileTitle,
     VRadio,
     VRadioGroup,
+    VTab,
+    VTabItem,
+    VTabs,
     VToolbar,
     VToolbarTitle
   },

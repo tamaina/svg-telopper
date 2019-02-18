@@ -27,11 +27,17 @@ declare global {
 Vue.component("font-awesome-icon", FontAwesomeIcon)
 
 import {
-
+  faMinus,
+  faPen,
+  faPlus,
+  faTrash
 } from "@fortawesome/free-solid-svg-icons"
 
 library.add(
-
+  faMinus,
+  faPen,
+  faPlus,
+  faTrash
 )
 
 Vue.use(Vuex)

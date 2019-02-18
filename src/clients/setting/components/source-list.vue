@@ -7,16 +7,15 @@ v-flex(xs5).source-list
       v-list-tile(
         @click="presetClicked"
         :data-source-name="false"
-        v-bind:class="{ active: selectedPreset }"
+        v-bind:class="{ active: $store.state.activeSources.some(e => e === null) }"
       ).preset
         v-list-tile-content
           v-list-tile-title.preview-select {{ $t("@.words.preset") }}
       source-list-item(
         v-for="source in sourceList"
         :source="source"
-        :active="activeItems.some(e => e === scene)"
+        :active="$store.state.activeSources.some(e => e === scene)"
         :key="source.name"
-        :activeItems="activeItems"
       )
 </template>
 <script lang="ts">
@@ -33,7 +32,6 @@ export default Vue.extend({
   data() {
     return {
       sourceList: [],
-      activeItems: [],
       selectedPreset: true
     }
   },
@@ -46,13 +44,8 @@ export default Vue.extend({
   },
   methods: {
     presetClicked(ev: MouseEvent) {
-      this.selectedPreset = !this.selectedPreset
-      if (this.selectedPreset) {
-        this.$store.commit("set", { key: "queriesShowing", value: this.$store.state.presets })
-        this.activeItems = []
-      } else {
-        this.$store.commit("set", { key: "queriesShowing", value: [] })
-      }
+      this.$store.commit("set", { key: "queriesShowing", value: this.$store.state.presets })
+      this.$store.commit("set", { key: "activeSources", value: [null] })
     },
   },
   watch: {

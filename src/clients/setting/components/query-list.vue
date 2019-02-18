@@ -2,6 +2,9 @@
 v-flex(xs5).query-list
   v-toolbar
     v-toolbar-title {{ $t("@.words.query") }}
+    v-spacer
+    v-btn(icon)
+      font-awesome-icon(icon="plus" @click="addNewQuery")
   v-card
     v-list
       v-list-tile(
@@ -13,13 +16,15 @@ v-flex(xs5).query-list
         v-bind:class="{ active: editingQueries.some(e => e === query._id) }"
       )
         v-list-tile-content
-          v-list-tile-title.preview-select {{ scene }}
+          v-list-tile-title.preview-select {{ query.presetName || query._id || $t("no-name") }}
 </template>
 <script lang="ts">
 import Vue from "vue"
 import { I18n } from "../i18n"
 
-const i18n = I18n("components/source-list")
+import equal from "deep-equal"
+
+const i18n = I18n("components/query-list")
 
 export default Vue.extend({
   components: {
@@ -30,7 +35,10 @@ export default Vue.extend({
   },
   computed: {
     queries() {
-      return this.$store.queriesShowing
+      return this.$store.state.queriesShowing
+    },
+    editingQueries() {
+      return this.$store.state.editingQueries
     }
   },
   mounted() {
@@ -42,12 +50,29 @@ export default Vue.extend({
     },
     listClickedWCtrl(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      if (this.$store.editingQueries.some(e => e === current.dataset.queryId)) {
+      if (this.$store.state.editingQueries.some(e => e._id === current.dataset.queryId)) {
         this.$store.commit("remove", { key: "editingQueries", value: current.dataset.queryId })
       } else {
         this.$store.commit("push", { key: "editingQueries", value: current.dataset.queryId })
       }
     },
+    addNewQuery(ev: MouseEvent) {
+      const v = equal(this.$store.state.activeSources, [null]) ? {
+          _id: null,
+          presetId: null,
+          presetName: null,
+          text: [],
+          innerHtml: "",
+          replace: [],
+          timeout: 0,
+          class: '',
+          stretch: '',
+          func: '',
+          anchor: 'middle'
+        } :
+        {}
+      this.$store.commit("set", { key: "editingQueries", value: [v] })
+    }
   },
   watch: {
     sceneActive(newVal, oldVal) {

@@ -9,7 +9,7 @@ export interface IQuery {
   text: string[]
   innerHtml: string
   replace: string[]
-  interval: number
+  timeout: number
   class: string
   stretch: boolean
   function: string

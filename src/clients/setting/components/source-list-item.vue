@@ -17,9 +17,8 @@ v-list-tile(
       source-list-item(
         v-for="source in source.children"
         :source="source"
-        :active="activeItems.some(e => e === scene)"
+        :active="$store.state.activeSources.some(e => e === scene)"
         :key="source.name"
-        :activeItems="activeItems"
       )
 v-list-tile(
   v-else
@@ -38,13 +37,11 @@ export default Vue.extend({
   name: "source-list-item",
   props: {
     source: Object,
-    _active: Boolean,
-    _activeItems: Array
+    _active: Boolean
   },
   data() {
     return {
-      active: this.$props._active,
-      activeItems: this.$props._activeItems
+      active: this.$props._active
     }
   },
   computed: {
@@ -67,15 +64,15 @@ export default Vue.extend({
   methods: {
     listClicked(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      this.$data.activeItems = [this.$props.source.name]
+      this.$store.commit("set", { key: "acriveSources", value: [this.$props.source.name]})
     },
     listClickedWCtrl(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetSourceName = this.$data.source.name
-      if (this.$data.activeItems.some(e => e === this.$data.source.name)) {
-        this.$data.activeItems = this.$data.activeItems.filter(e => e !== targetSourceName)
+      if (this.$store.activeSources.some(e => e === this.$data.source.name)) {
+        this.$store.commit("remove", { key: "acriveSources", value: this.$props.source.name})
       } else {
-        this.$data.activeItems = this.$data.activeItems.push(targetSourceName)
+        this.$store.commit("push", { key: "acriveSources", value: this.$props.source.name})
       }
     },
   },

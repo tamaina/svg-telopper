@@ -2,11 +2,12 @@
 v-app(dark)#vapp
   navbar(v-if="$store.state.obsInfo.connected" :title="$store.state.obsInfo.scName")
   navbar(v-else :title="$t('obs-not-connected')")
-  v-layout(row)
-    scene-list
-    source-list
-    query-list
-    query-editor
+  v-content
+    v-layout(row)
+      scene-list
+      source-list
+      query-list
+      query-editor
 </template>
 
 <script lang="ts">
