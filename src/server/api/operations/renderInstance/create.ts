@@ -38,7 +38,7 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   const inserted = await db.renderInstances.insert(
-    request.body.query
+    request.body.option.query
   )
 
   server.broadcastData({

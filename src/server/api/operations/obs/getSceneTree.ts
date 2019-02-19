@@ -42,12 +42,12 @@ export default async (server: STServer, request: ISocketRequestData) => {
     return { type: "success", success: "ng" }
   }
 
-  const trueScenes = request.body.sceneNames.filter(e => e && server.obsInfo.scenes.some(e))
+  const trueScenes = request.body.option.sceneNames.filter(e => e && server.obsInfo.scenes.some(e))
 
-  if (request.body.sceneNames.length - trueScenes > 1) server.message("不明なシーンが見つかりました。", "warn")
+  if (request.body.option.sceneNames.length - trueScenes > 1) server.message("不明なシーンが見つかりました。", "warn")
 
   const [sources, sceneList] = await Promise.all([(() => {
-    switch (request.body.andOr) {
+    switch (request.body.option.andOr) {
     case "and":
       return db.obsSources.find({
         // tslint:disable-next-line: only-arrow-functions

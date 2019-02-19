@@ -1,4 +1,5 @@
 import $ from "cafy"
+import equal from "deep-equal"
 import * as nestedProperty from "nested-property"
 import Vuex from "vuex"
 import { IObsInfo } from "../../../models/obs"
@@ -13,45 +14,53 @@ export const Store = (socket: Socket) => {
     plugins: [],
     state: {
       hoge: "fuga",
-      sceneActive: [],
+      activeScenes: [],
       sceneMultipleAndOr: "and",
       renderInstances: [],
       presets: [],
       queriesShowing: [],
       activeSources: [],
-      editingQueries: []
+      selectedRenderInstances: [] as string[],
+      editingQueries: [] as string[]
     },
     mutations: {
       set(state, x: { key: string; value: any }) {
+        console.log("set", x)
         nestedProperty.set(state, x.key, x.value)
       },
       // 配列にプッシュします
       push(state, x: { key: string; value: any }) {
+        console.log("push", x)
         // 対象が配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr().ok(target)) return
-        nestedProperty.set(state, x.key, target.push(x.value))
+        target.push(x.value)
+        nestedProperty.set(state, x.key, target)
       },
-      // 配列の要素をテストして除外します
+      // 配列の要素をテスト(ディープイコール)して除外します
       remove(state, x: { key: string; value: any }) {
+        console.log("remove", x)
         // 対象が配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr().ok(target)) return
-        nestedProperty.set(state, x.key, target.filter(e => e !== x.value))
+        nestedProperty.set(state, x.key, target.filter(e => !equal(e, x.value)))
       },
       // 配列の要素をテストして除外します
       removeByKeyTest(state, x: { key: string; testKey: string; testValue: any }) {
+        console.log("removeByKeyTest", x)
         // 対象がオブジェクトの配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr($.obj()).ok(target)) return
-        nestedProperty.set(state, x.key, target.filter(e => e[x.testKey] === x.testValue ? false : true))
+        nestedProperty.set(state, x.key, target.filter(e => !equal(e[x.testKey], x.testValue, { strict: true })))
       },
       // 配列の要素をテストしてアップデートします
       updateByKeyTest(state, x: { key: string; value: any; testKey: string; testValue: any }) {
+        console.log("updateByKeyTest", x)
         // 対象がオブジェクトの配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr($.obj()).ok(target)) return
-        nestedProperty.set(state, x.key, target.map(e => e[x.testKey] === x.testValue ? x.value : e))
+        nestedProperty.set(state, x.key, target.map(
+          e => equal(e[x.testKey], x.testValue, { strict: true }) ? x.value : e))
       }
     },
     modules: {
@@ -59,11 +68,11 @@ export const Store = (socket: Socket) => {
     }
   })
 
-  store.watch(state => state.sceneActive, (newVal, oldVal) => {
+  store.watch(state => state.activeScenes, (newVal, oldVal) => {
     if (newVal.length === 1 && newVal[0]) store.commit("obsInfo/changeScene", ["previewing", newVal[0]])
   })
   store.watch(state => (state as any).obsInfo.scenePreviewing, (newVal, oldVal) => {
-    if (store.state.sceneActive.length === 1) store.commit("set", { key: "sceneActive", value: newVal})
+    if (store.state.activeScenes.length === 1) store.commit("set", { key: "activeScenes", value: newVal})
   })
 
   socket.socket.addEventListener("message", ev => {
@@ -101,11 +110,19 @@ export const Store = (socket: Socket) => {
       break
     case "renderInstanceUpdated":
       store.commit("updateByKeyTest",
-        { key: "renderInstances", value: data.body.query, testKey: "_id", testValue: data.body.query._id })
+        {
+          key: "renderInstances",
+          value: data.body.query,
+          testKey: "renderInstanceId",
+          testValue: data.body.query.renderInstanceId })
       break
     case "renderInstanceRemoved":
       store.commit("removeByKeyTest",
-        { key: "renderInstances", testKey: "_id", testValue: data.body.presetId })
+        {
+          key: "renderInstances",
+          testKey: "renderInstanceId",
+          testValue: data.body.renderInstanceId
+        })
       break
     case "queryCreated":
       if (data.body.query.presetName) {
@@ -121,33 +138,28 @@ export const Store = (socket: Socket) => {
           { key: "queriesShowing", value: data.body.query, testKey: "_id", testValue: data.body.query._id })
       }
       break
-    case "queryRemoved":
-      if (data.body.query.presetName) {
+    case "queriesRemoved":
+      for (const id of data.body.ids) {
         store.commit("removeByKeyTest",
-          { key: "presets", testKey: "_id", testValue: data.body.presetId })
-      } else {
+          { key: "presets", testKey: "_id", testValue: id })
         store.commit("removeByKeyTest",
-          { key: "queriesShowing", testKey: "_id", testValue: data.body.presetId })
+          { key: "queriesShowing", testKey: "_id", testValue: id })
       }
       break
     }
   })
 
-  socket.request({
-    type: "obs/info"
-  })
-  socket.request({
-    type: "renderInstance/list"
-  }).then(data => {
+  socket.operate("obs/info", {})
+  socket.operate("renderInstance/list", {}).then(data => {
     if (!data.renderInstances) return
     store.commit("set", { key: "renderInstances", value: data.renderInstances })
   })
-  socket.request({
-    type: "query/list",
+  socket.operate("query/list", {
     isPreset: true
   }).then(data => {
-    if (!data.queries) return
-    store.commit("set", { key: "preset", value: data.queries })
+    console.log(data)
+    if (data.queries === undefined) return
+    store.commit("set", { key: "presets", value: data.queries })
   })
 
   return store

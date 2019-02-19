@@ -33,7 +33,7 @@ export default async (server: STServer, request: ISocketRequestData) => {
   if (!server.obsInfo) return { type: "obsInfo", obsInfo: server.obsInfo }
 
   const sources = await Promise.all(
-    request.body.names.map(
+    request.body.option.names.map(
         sourceName => server.obs.send("GetSourceSettings", { sourceName })
       )
     ) as any[]

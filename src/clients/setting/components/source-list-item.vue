@@ -1,15 +1,15 @@
 <template lang="pug">
-v-list-tile(
+source-list-item-render-instance(
   v-if="relatedRenderInstance"
-  :data-render-instance-id="relatedRenderInstance.renderInstanceId"
-  @click="renderInstanceClicked"
-  :class="{ active }"
+  :renderInstance="relatedRenderInstance"
+  @click.exact="listClicked"
+  @click.ctrl="listClickedWCtrl"
 ).source.source-text
-  v-list-tile-content
-    v-list-tile-title {{ source.name }}
 v-list-tile(
   v-else-if="source.type === 'group'"
-  :class="{ active }"
+  :class="{ 'active red white--text': active }"
+  @click.exact="listClicked"
+  @click.ctrl="listClickedWCtrl"
 )
   v-list-tile-content
     v-list-tile-title {{ source.name }}
@@ -17,34 +17,40 @@ v-list-tile(
       source-list-item(
         v-for="source in source.children"
         :source="source"
-        :active="$store.state.activeSources.some(e => e === scene)"
         :key="source.name"
       )
 v-list-tile(
   v-else
-  :class="{ active }"
+  :class="{ 'active red white--text': active }"
+  @click.exact="listClicked"
+  @click.ctrl="listClickedWCtrl"
 ).source.source-others
   v-list-tile-content
     v-list-tile-title {{ source.name }}
 </template>
 <script lang="ts">
 import Vue from "vue"
-import { I18n } from "../i18n";
+import { I18n } from "../i18n"
+import sourceListItemRenderInstance from "./source-list-item-render-instance.vue"
 
 const i18n = I18n("components/source-list")
 
 export default Vue.extend({
   name: "source-list-item",
+  components: {
+    sourceListItemRenderInstance
+  },
   props: {
-    source: Object,
-    _active: Boolean
+    source: Object
   },
   data() {
     return {
-      active: this.$props._active
     }
   },
   computed: {
+    active() {
+      return this.$store.state.activeSources.some(e => e === this.$props.source.name)
+    },
     relatedRenderInstance() {
       if (this.source.type === "browser_source"
         && this.source.sourceSettings.url
@@ -60,27 +66,26 @@ export default Vue.extend({
     }
   },
   mounted() {
+    console.log(this.source)
   },
   methods: {
     listClicked(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      this.$store.commit("set", { key: "acriveSources", value: [this.$props.source.name]})
+      this.$store.commit("set", { key: "activeSources", value: [this.$props.source.name]})
     },
     listClickedWCtrl(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      const targetSourceName = this.$data.source.name
-      if (this.$store.activeSources.some(e => e === this.$data.source.name)) {
-        this.$store.commit("remove", { key: "acriveSources", value: this.$props.source.name})
+      if (this.$store.state.activeSources.some(e => e === this.$props.source.name)) {
+        this.$store.commit("remove", { key: "activeSources", value: this.$props.source.name})
       } else {
-        this.$store.commit("push", { key: "acriveSources", value: this.$props.source.name})
+        this.$store.commit("push", { key: "activeSources", value: this.$props.source.name})
       }
-    },
+    }
   },
   watch: {
     active(newVal, oldVal) {
       if (!newVal) return
-      this.socket.request({
-        type: "query/list",
+      this.$root.socket.operate("query/list", {
         ids: this.relatedRenderInstance.queries
       }).then(data => {
         this.$store.commit("set", { key: "queriesShowing", val: data.queries })
@@ -91,11 +96,4 @@ export default Vue.extend({
 })
 </script>
 <style lang="stylus" scoped>
-@import '~vuetify/src/stylus/settings/_colors.styl'
-@import '~vuetify/src/stylus/generic/_colors.styl'
-.source-wrapper
-  .source
-    &.actice
-      @extend .purple
-      @extend .white--text
 </style>

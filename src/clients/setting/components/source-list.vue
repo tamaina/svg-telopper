@@ -1,33 +1,44 @@
 <template lang="pug">
-v-flex(xs5).source-list
-  v-toolbar
-    v-toolbar-title {{ $t("@.obs.source") }}
+v-flex(xs2).source-list
   v-card
+    v-toolbar
+      v-toolbar-title {{ $t("@.obs.source") }}
     v-list
       v-list-tile(
         @click="presetClicked"
         :data-source-name="false"
-        v-bind:class="{ active: $store.state.activeSources.some(e => e === null) }"
+        v-bind:class="{ 'active red white--text': $store.state.selectedRenderInstances.some(e => e === null) }"
       ).preset
         v-list-tile-content
           v-list-tile-title.preview-select {{ $t("@.words.preset") }}
-      source-list-item(
-        v-for="source in sourceList"
-        :source="source"
-        :active="$store.state.activeSources.some(e => e === scene)"
-        :key="source.name"
-      )
+      template(v-if="!isAll")
+        source-list-item(
+          v-for="source in sourceList"
+          :source="source"
+          :key="source.name"
+        )
+      template(v-else)
+        source-list-item-render-instance(
+          v-for="renderInstance in $store.state.renderInstances"
+          :renderInstance="renderInstance"
+          :key="renderInstance.renderInstanceId"
+        )
+
 </template>
 <script lang="ts">
 import Vue from "vue"
 import { I18n } from "../i18n"
 import sourceListItem from "./source-list-item.vue"
+import sourceListItemRenderInstance from "./source-list-item-render-instance.vue"
+
+import equal from "deep-equal"
 
 const i18n = I18n("components/source-list")
 
 export default Vue.extend({
   components: {
-    sourceListItem
+    sourceListItem,
+    sourceListItemRenderInstance
   },
   data() {
     return {
@@ -36,27 +47,32 @@ export default Vue.extend({
     }
   },
   computed: {
-    sceneActive() {
-      return this.$store.state.sceneActive
+    activeScenes() {
+      return this.$store.state.activeScenes
+    },
+    isAll() {
+      return equal(this.$store.state.activeScenes, [null], { strict: true })
     }
   },
   mounted() {
   },
   methods: {
     presetClicked(ev: MouseEvent) {
-      this.$store.commit("set", { key: "queriesShowing", value: this.$store.state.presets })
       this.$store.commit("set", { key: "activeSources", value: [null] })
+      this.$store.commit("set", { key: "selectedRenderInstances", value: [null] })
     },
   },
   watch: {
-    sceneActive(newVal, oldVal) {
-      this.$root.socket.request({
-          type: "obs/getSceneTree",
+    activeScenes(newVal, oldVal) {
+      if (equal(this.$store.state.activeScenes, [null], { strict: true })) {
+        return this.$data.sourceList = []
+      }
+      this.$root.socket.operate("obs/getSceneTree", {
           sceneNames: newVal,
           andOr: this.$store.state.sceneMultipleAndOr
         })
         .then(res => {
-          if (res.type === "sourceSettings") this.sourceList = res.sourceTree
+          if (res.type === "sourceSettings") this.$data.sourceList = res.sourceTree
         })
     }
   },
@@ -64,16 +80,4 @@ export default Vue.extend({
 })
 </script>
 <style lang="stylus" scoped>
-@import '~vuetify/src/stylus/settings/_colors.styl'
-@import '~vuetify/src/stylus/generic/_colors.styl'
-.source-list
-  .source
-    &.active
-      @extend .purple
-      @extend .white--text
-  .preset
-    @extend .red--text
-    &.active
-      @extend .red
-      @extend .white--text
 </style>

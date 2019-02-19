@@ -1,8 +1,8 @@
 <template lang="pug">
-v-flex(xs5).scene-list
-  v-toolbar
-    v-toolbar-title {{ $t("@.obs.scene") }}
+v-flex(xs2).scene-list
   v-card
+    v-toolbar
+      v-toolbar-title {{ $t("@.obs.scene") }}
     v-list
       v-list-tile(
         v-for="scene in $store.state.obsInfo.scenes"
@@ -14,22 +14,17 @@ v-flex(xs5).scene-list
         @clicl.shift.exact="listClickedWShiftWOCtrl"
         @clicl.shift="listClickedWCtrlShift"
         :data-scene="scene"
-        :class="{ active: sceneActive.some(e => e === scene) }"
+        :class="{ 'active green white--text': activeScenes.some(e => e === scene) }"
       ).scene
         v-list-tile-content
           v-list-tile-title.preview-select {{ scene }}
       v-list-tile(
-        @click="listClicked"
-        @click.exact="listClickedWOCtrlShift"
-        @clicl.ctrl.exact="listClickedWCtrlWOShift"
-        @clicl.ctrl="listClickedWCtrlShift"
-        @clicl.shift.exact="listClickedWShiftWOCtrl"
-        @clicl.shift="listClickedWCtrlShift"
+        @click="notInSceneClicked"
         :data-scene="null"
-        :class="{ active: sceneActive.find(e => e === null) }"
+        :class="{ 'active green white--text': activeScenes.some(e => e === null) }"
       ).scene
         v-list-tile-content
-          v-list-tile-title.preview-select {{ $t("not-in-scene") }}
+          v-list-tile-title.preview-select {{ $t("all") }}
 </template>
 <script lang="ts">
 import Vue from "vue"
@@ -43,26 +38,36 @@ export default Vue.extend({
     }
   },
   computed: {
-    sceneActive() {
-      return this.$store.state.sceneActive
+    activeScenes() {
+      return this.$store.state.activeScenes
     }
   },
   mounted() {
   },
   methods: {
+    notInSceneClicked(ev: MouseEvent) {
+      if (
+        this.$store.state.activeScenes.some(e => e === null)
+      ) {
+        // シーンリストから削除
+        this.$store.commit("remove", { key: "activeScenes", value: null })
+      } else {
+        this.$store.commit("set", { key: "activeScenes", value: [null] })
+      }
+    },
     listClicked(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetScene = current.dataset.scene || null
       if (
       // アクティブで現在のシーンもこれ
-        this.$store.state.sceneActive.some(e => e === targetScene) &&
+        this.$store.state.activeScenes.some(e => e === targetScene) &&
         this.$store.state.obsInfo.currentScene === targetScene
       ) {
         // シーンリストから削除
-        this.$store.commit("remove", { key: "sceneActive", value: targetScene })
+        this.$store.commit("remove", { key: "activeScenes", value: targetScene })
       } else if (
       // 2回目に(アクティブな状態でもういちど)押された
-        this.$store.state.sceneActive.some(e => e === targetScene) &&
+        this.$store.state.activeScenes.some(e => e === targetScene) &&
         this.$store.state.obsInfo.currentScene !== targetScene &&
         targetScene
       ) {
@@ -73,9 +78,9 @@ export default Vue.extend({
     listClickedWOCtrlShift(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetScene = current.dataset.scene || null
-      if (!this.$store.state.sceneActive.some(e => e === targetScene)) {
+      if (!this.$store.state.activeScenes.some(e => e === targetScene)) {
       // アクティブではないならシーンリストを置き換え
-        this.$store.commit("set", { key: "sceneActive", value: [ targetScene ]})
+        this.$store.commit("set", { key: "activeScenes", value: [ targetScene ]})
       }
     },
     listClickedWCtrlWOShift(ev: MouseEvent) {
@@ -87,9 +92,9 @@ export default Vue.extend({
     listClickedWCtrlShift(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetScene = current.dataset.scene || null
-      if (!this.$store.state.sceneActive.some(e => e === targetScene)) {
+      if (!this.$store.state.activeScenes.some(e => e === targetScene)) {
       // アクティブではないならシーンリストにpush
-        this.$store.commit("push", { key: "sceneActive", value: targetScene })
+        this.$store.commit("push", { key: "activeScenes", value: targetScene })
       }
     }
   },
@@ -97,11 +102,4 @@ export default Vue.extend({
 })
 </script>
 <style lang="stylus" scoped>
-@import '~vuetify/src/stylus/settings/_colors.styl'
-@import '~vuetify/src/stylus/generic/_colors.styl'
-.scene-list
-  .scene
-    &.actice
-      @extend .green
-      @extend .white--text
 </style>

@@ -15,7 +15,7 @@ export class Socket {
   public pass(data: ISocketData) {
     this.socket.send(JSON.stringify(data))
   }
-  public request(req: any, type: "request" | "obsRequestData" = "request"): Promise<ISocketResponseData["body"]> {
+  public request(req: any, type: "operate" | "obsRequestData" = "operate"): Promise<ISocketResponseData["body"]> {
     return new Promise (resolve => {
       const instance = getUniqueStr()
 
@@ -41,5 +41,11 @@ export class Socket {
       type,
       option
     }, "obsRequestData")
+  }
+  public operate(type: string, option: any = {}) {
+    return this.request({
+      type,
+      option
+    }, "operate")
   }
 }

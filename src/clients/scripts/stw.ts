@@ -56,8 +56,7 @@ export class STW {
   public async init(data, root: HTMLElement) {
     if (this.initialized) return
     this.initialized = true
-    this.presets = await this.socket.request({
-      type: "queries/list",
+    this.presets = await this.socket.operate("queries/list", {
       isPreset: true
     }).then(res => res.presets)
     this.options = data.options
@@ -91,8 +90,7 @@ export class STW {
         ? this.client.insertBefore(foundElem, oldElem)
         : this.client.insertAdjacentElement("beforeend", foundElem)
       } else {
-        await this.socket.request({
-          type: "queries/list",
+        await this.socket.operate("queries/list", {
           ids: [query]
         }).then(async queryList => {
           this.insertSubtitle(queryList[0], i)
@@ -126,8 +124,7 @@ export class STW {
   }
 
   public insertSubtitles(queries: string[]) {
-    this.socket.request({
-      type: "queries/list",
+    this.socket.operate("queries/list", {
       ids: queries
     }).then(async queryList => {
       for (const query of queryList.queries as IRenderInstanceQuery[]) {
@@ -219,7 +216,7 @@ export class STW {
     subtitle.style.transform =
       `scale(${scaleX}, ${scaleY})`
 */
-    if (query.function || preset.function) {
+    if ((query.function && query.function !== "") || (preset.function && preset.function !== "")) {
       const func = new Function("subtitle", "query", "preset", query.function || preset.function)
       func.bind(this, subtitle)
     }

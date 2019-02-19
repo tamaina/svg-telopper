@@ -3,11 +3,14 @@ v-app(dark)#vapp
   navbar(v-if="$store.state.obsInfo.connected" :title="$store.state.obsInfo.scName")
   navbar(v-else :title="$t('obs-not-connected')")
   v-content
-    v-layout(row)
-      scene-list
-      source-list
-      query-list
-      query-editor
+    v-container(grid-list-xs fluid)
+      v-layout(row wrap)
+        scene-list
+        source-list
+        query-list
+        query-editor
+  
+  #disconnected(v-show="$store.state.socketState") {{ $t("disconnected") }}
 </template>
 
 <script lang="ts">

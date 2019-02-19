@@ -17,10 +17,13 @@ common:
     query: クエリ
 app:
   obs-not-connected: OBS未接続
+  disconnected: サーバーに接続できません。
 components/scene-list:
-  not-in-scene: 未分類
+  all: すべて
 components/query-list:
   no-name: (名称なし)
+  empty: 特に表示するものはないようです。
+  you-should-have-one-or-more-presets: 描画インスタンスのクエリを作成するには、プリセットが一つ以上登録されている必要があります！
 components/query-editor:
   empty: 編集するものはありません。
   new-query: 新しいクエリ
@@ -28,5 +31,15 @@ components/query-editor:
   replacer-text: 置き換え対象
   replacing-text: 文字列
   save: 保存
-  save-preset: 登録
+  remove: 削除
+  save-preset: プリセットに登録
   preset-name: プリセット名
+  timeout: タイムアウト
+  class: クラス
+  stretch: 枠に合わせて変形
+  html: HTML/SVG/CSS
+  function: 関数
+  push-text: フィールドを追加
+  pop-text: フィールドを削除
+  anchor: アンカー
+  you-should-fill-in-preset-name: プリセット名を記入してください！

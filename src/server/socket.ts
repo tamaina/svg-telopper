@@ -25,10 +25,11 @@ const onRenderInstanceConnected = async (
       server.message("まずはプリセットを登録しましょう！", "warn")
       return
     }
+    const newQuery = await db.queries.insert({ presetId: onePreset._id })
     db.renderInstances.insert({
       renderInstanceId,
       options: {
-        queries: [onePreset._id],
+        queries: [newQuery._id],
         reverse: false,
         stretch: false
       },
@@ -94,7 +95,7 @@ export const socket = (server: STServer) => {
           }
           break
 
-        case "request":
+        case "operate":
           const operation = operations.find(e => e.name === data.body.type)
 
           const operationErrored = e => {

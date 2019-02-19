@@ -31,18 +31,19 @@ export const meta = {
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
-  if (await db.renderInstances.findOne({ renderInstanceId: request.body.renderInstanceId }).connectionCount > 0) {
+  if (await db.renderInstances.findOne(
+    {renderInstanceId: request.body.option.renderInstanceId }).connectionCount > 0) {
     return { type: "success", success: "ng" }
   }
 
   db.renderInstances.remove(
-    { renderInstanceId: request.body.renderInstanceId }
+    { renderInstanceId: request.body.option.renderInstanceId }
   )
   server.broadcastData({
     type: "update",
     body: {
       type: "renderInstanceRemoved",
-      renderInstanceId: request.body.renderInstanceId
+      renderInstanceId: request.body.option.renderInstanceId
     }
   })
 

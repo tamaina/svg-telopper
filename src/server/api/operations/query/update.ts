@@ -36,8 +36,8 @@ export default async (server: STServer, request: ISocketRequestData) => {
     body: {
       type: "queryUpdated",
       query: await db.queries.update(
-        { _id: request.body.query._id },
-        { $set: request.body.query },
+        { _id: request.body.option.query._id },
+        { $set: request.body.option.query },
         { returnUpdatedDocs: true }
       )
     }

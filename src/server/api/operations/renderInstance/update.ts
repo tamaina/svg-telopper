@@ -42,8 +42,8 @@ export default async (server: STServer, request: ISocketRequestData) => {
     body: {
       type: "renderInstanceUpdated",
       query: await db.renderInstances.update(
-        { _id: request.body.query._id },
-        { $set: request.body.query },
+        { renderInstanceId: request.body.option.renderInstanceId },
+        { $set: request.body.option.options },
         { returnUpdatedDocs: true }
       )
     }

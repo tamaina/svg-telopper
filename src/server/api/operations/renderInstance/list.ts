@@ -33,8 +33,8 @@ export const meta = {
 export default async (server: STServer, request: ISocketRequestData) => {
   return {
     type: "renderInstancesList",
-    renderInstances: request.body.ids && meta.params.ids.validator.ok(request.body.ids)
-                      ? await db.renderInstances.find({ renderInstanceId: { $in: request.body.ids } })
+    renderInstances: request.body.option.ids && meta.params.ids.validator.ok(request.body.option.ids)
+                      ? await db.renderInstances.find({ renderInstanceId: { $in: request.body.option.ids } })
                       : await db.renderInstances.find({})
   }
 }

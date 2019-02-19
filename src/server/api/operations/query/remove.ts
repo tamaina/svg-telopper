@@ -10,10 +10,10 @@ export const meta = {
     "ja-JP": "プリセットをアップデートします。"
   },
   params: {
-    presetId: {
-      validator: $.str,
+    ids: {
+      validator: $.arr($.str),
       description: {
-        "ja-JP": "プリセットクエリ"
+        "ja-JP": "クエリIDの配列です"
       }
     }
   },
@@ -32,13 +32,13 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   db.queries.remove(
-    { _id: request.body.presetId }
+    { _id: { $in: request.body.option.ids }}
   )
   server.broadcastData({
     type: "update",
     body: {
-      type: "presetRemoved",
-      presetId: request.body.presetId
+      type: "queriesRemoved",
+      ids: request.body.option.ids
     }
   })
 

@@ -1,6 +1,6 @@
 export interface ISocketData {
   type: "ping" |
-        "request" |
+        "operate" |
         "response" |
         "renderInstanceInfo" |
         "obsRecievedData" |
@@ -36,11 +36,12 @@ export interface ISocketMessageData extends ISocketBroadData {
 }
 
 export interface ISocketRequestData extends ISocketData {
-  type: "request" |
+  type: "operate" |
         "obsRequestData"
   body: {
     [ key: string ]: any
     type: string
+    option: any
   },
   instance: string
 }
