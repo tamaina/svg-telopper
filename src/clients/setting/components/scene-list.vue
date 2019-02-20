@@ -1,6 +1,6 @@
 <template lang="pug">
-v-flex(xs2).scene-list
-  v-card
+v-flex(xs2 v-if="obsConnected").scene-list.h-100
+  v-card.column
     v-toolbar
       v-toolbar-title {{ $t("@.obs.scene") }}
     v-list
@@ -40,9 +40,13 @@ export default Vue.extend({
   computed: {
     activeScenes() {
       return this.$store.state.activeScenes
+    },
+    obsConnected() {
+      return this.$store.state.obsInfo.connected
     }
   },
   mounted() {
+    if (!this.$store.state.obsInfo.connected) this.$store.commit("set", { key: "activeScenes", value: [null] })
   },
   methods: {
     notInSceneClicked(ev: MouseEvent) {
@@ -96,6 +100,11 @@ export default Vue.extend({
       // アクティブではないならシーンリストにpush
         this.$store.commit("push", { key: "activeScenes", value: targetScene })
       }
+    }
+  },
+  watch: {
+    obsConnected(newVal, oldVal) {
+      if (!newVal) this.$store.commit("set", { key: "activeScenes", value: [null] })
     }
   },
   i18n

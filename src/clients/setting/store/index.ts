@@ -21,7 +21,8 @@ export const Store = (socket: Socket) => {
       queriesShowing: [],
       activeSources: [],
       selectedRenderInstances: [] as string[],
-      editingQueries: [] as string[]
+      editingQueries: [] as string[],
+      socketConnected: false
     },
     mutations: {
       set(state, x: { key: string; value: any }) {
@@ -106,7 +107,7 @@ export const Store = (socket: Socket) => {
       store.commit("obsInfo/renew", data.body.obsInfo as IObsInfo)
       break
     case "renderInstanceCreated":
-      store.commit("push", { key: "renderInstances", value: data.body.query })
+      store.commit("push", { key: "renderInstances", value: data.body.instance })
       break
     case "renderInstanceUpdated":
       store.commit("updateByKeyTest",
@@ -146,6 +147,14 @@ export const Store = (socket: Socket) => {
           { key: "queriesShowing", testKey: "_id", testValue: id })
       }
       break
+    case "showRenderInstanceSubtitle":
+      const value = store.state.renderInstances.map(e => {
+        if (e.renderInstanceId !== data.body.renderInstanceId) return e
+        const newv = Object.assign({}, e)
+        newv.options.showingIndex = data.body.target
+        return newv
+      })
+      store.commit("set", { key: "renderInstances", value })
     }
   })
 
@@ -161,6 +170,18 @@ export const Store = (socket: Socket) => {
     if (data.queries === undefined) return
     store.commit("set", { key: "presets", value: data.queries })
   })
+
+  switch (socket.socket.readyState) {
+  case 1:
+    store.commit("set", { key: "socketConnected", value: true})
+    break
+  default:
+    store.commit("set", { key: "socketConnected", value: false})
+  }
+
+  socket.socket.addEventListener("open", () => store.commit("set", { key: "socketConnected", value: true}))
+  socket.socket.addEventListener("error", () => store.commit("set", { key: "socketConnected", value: false}))
+  socket.socket.addEventListener("close", () => store.commit("set", { key: "socketConnected", value: false}))
 
   return store
 }

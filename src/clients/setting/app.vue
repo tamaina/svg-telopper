@@ -2,15 +2,18 @@
 v-app(dark)#vapp
   navbar(v-if="$store.state.obsInfo.connected" :title="$store.state.obsInfo.scName")
   navbar(v-else :title="$t('obs-not-connected')")
-  v-content
-    v-container(grid-list-xs fluid)
-      v-layout(row wrap)
+  v-content#vappcontent
+    v-container(grid-list-xs fluid).h-100
+      v-layout(row wrap).justify-center.h-100
         scene-list
         source-list
-        query-list
+        v-flex(xs2)
+          v-layout(column)
+            render-instance-setting
+            query-list
         query-editor
-  
-  #disconnected(v-show="$store.state.socketState") {{ $t("disconnected") }}
+  #disconnected(v-show="!$store.state.socketConnected")
+    v-card.disconnected-inner.pa-5.ma-auto {{ $t("disconnected") }}
 </template>
 
 <script lang="ts">
@@ -21,6 +24,7 @@ import sceneList from "./components/scene-list.vue"
 import sourceList from "./components/source-list.vue"
 import queryList from "./components/query-list.vue"
 import queryEditor from "./components/query-editor.vue"
+import renderInstanceSetting from "./components/render-instance-setting.vue"
 
 const i18n = I18n("app")
 
@@ -31,7 +35,8 @@ export default Vue.extend({
     sceneList,
     sourceList,
     queryList,
-    queryEditor
+    queryEditor,
+    renderInstanceSetting
   }
 })
 </script>
@@ -39,5 +44,19 @@ export default Vue.extend({
 <style lang="stylus">
 #vapp
   width: 100%
+  height: 100%
+
+#vappcontent
+  position: absolute
+  height: calc(100vh - 64px)
+  margin-top: 64px
+  width: 100%
+
+#disconnected
+  width: 100%
+  height: 100%
+  position: fixed
+  display: flex;
+  background: rgba(0,0,0,.5)
   height: 100%
 </style>

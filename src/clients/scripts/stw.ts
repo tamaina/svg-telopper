@@ -39,7 +39,7 @@ export class STW {
       case "initializeRenderInstance":
         this.init(data.body, root)
         break
-      case "updateRenderInstance":
+      case "renderInstanceUpdated":
         this.updateRInfo(data.body)
         break
       case "showRenderInstanceSubtitle":
@@ -151,7 +151,7 @@ export class STW {
     el.attachShadow({mode: "open"})
     el.dataset.id = query._id
     el.dataset.presetId = query.presetId
-    el.dataset.timeout = query.timeout ? `${query.timeout}` : null
+    el.dataset.timeout = query.timeout && query.timeout !== 0 ? `${query.timeout}` : null
 
     const ibTest = $.num.min(0).max(this.client.childElementCount - 1).ok(insertBefore)
     const subtitle = (() => {
@@ -218,7 +218,7 @@ export class STW {
 */
     if ((query.function && query.function !== "") || (preset.function && preset.function !== "")) {
       const func = new Function("subtitle", "query", "preset", query.function || preset.function)
-      func.bind(this, subtitle)
+      func.bind(this, subtitle, query, preset)
     }
   }
 

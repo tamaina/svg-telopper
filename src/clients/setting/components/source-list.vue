@@ -1,6 +1,6 @@
 <template lang="pug">
-v-flex(xs2).source-list
-  v-card
+v-flex(xs2).source-list.h-100
+  v-card.column
     v-toolbar
       v-toolbar-title {{ $t("@.obs.source") }}
     v-list
@@ -23,7 +23,6 @@ v-flex(xs2).source-list
           :renderInstance="renderInstance"
           :key="renderInstance.renderInstanceId"
         )
-
 </template>
 <script lang="ts">
 import Vue from "vue"

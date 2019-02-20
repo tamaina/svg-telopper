@@ -37,13 +37,16 @@ export const meta = {
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
+  const b = await db.renderInstances.findOne(
+    { renderInstanceId: request.body.option.renderInstanceId }
+  )
   server.broadcastData({
     type: "update",
     body: {
       type: "renderInstanceUpdated",
       query: await db.renderInstances.update(
         { renderInstanceId: request.body.option.renderInstanceId },
-        { $set: request.body.option.options },
+        { $set: { options: Object.assign(b.options, request.body.option.options) } },
         { returnUpdatedDocs: true }
       )
     }

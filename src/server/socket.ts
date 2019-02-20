@@ -26,15 +26,24 @@ const onRenderInstanceConnected = async (
       return
     }
     const newQuery = await db.queries.insert({ presetId: onePreset._id })
-    db.renderInstances.insert({
+    const instance = {
       renderInstanceId,
       options: {
         queries: [newQuery._id],
         reverse: false,
-        stretch: false
+        stretch: false,
+        showingIndex: 0
       },
       connectionCount: 1
-    })
+    }
+    db.renderInstances.insert(instance)
+    server.ws.broadcast(JSON.stringify({
+      type: "response",
+      body: {
+        type: "renderInstanceCreated",
+        instance
+      }
+    }))
   }
 
   const renderInstanceDied = () => {
@@ -90,6 +99,12 @@ export const socket = (server: STServer) => {
           case "registerRenderInstance":
             onRenderInstanceConnected(server, connection, rdata, data)
             break
+          case "showRenderInstanceSubtitle":
+            db.renderInstances.update({
+              renderInstanceId: data.body.renderInstanceId
+            }, {
+              $set: { "options.showingIndex": data.body.target }
+            })
           default:
             server.ws.broadcast(rdata.utf8Data)
           }

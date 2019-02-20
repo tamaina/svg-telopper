@@ -1,6 +1,6 @@
 <template lang="pug">
-v-flex(xs2).query-list
-  v-card
+v-flex(grow).query-list
+  v-card.column
     v-toolbar
       v-toolbar-title {{ $t("@.words.query") }}
       v-spacer
@@ -9,14 +9,14 @@ v-flex(xs2).query-list
     v-list(v-if="queries.length > 0")
       v-list-tile(
         v-for="query in queries"
-        :key="query._id"
-        @click="listClicked"
+        :key="query._id || query._edit_id"
+        @click.exact="listClicked"
         @clicl.ctrl="listClickedWCtrl"
-        :data-query-id="query._id"
-        v-bind:class="{ 'active purple white--text': editingQueries.some(e => e === query._id) }"
+        :data-query-id="query._id || query._edit_id"
+        v-bind:class="{ 'active purple white--text': editingQueries.some(e => e === query._id || e === query._edit_id) }"
       )
         v-list-tile-content
-          v-list-tile-title.preview-select {{ query.presetName || query._id || $t("no-name") }}
+          v-list-tile-title.preview-select {{ query.presetName || query._id ? `#${query._id}` : query._edit_id ? $t("new-query") : $t("no-name") }}
     .empty.py-5.px-3.text-xs-center(v-else-if="this") {{ $t("empty") }}
 </template>
 <script lang="ts">
@@ -66,7 +66,6 @@ export default Vue.extend({
       if (equal(this.$store.state.selectedRenderInstances, [null], { strict: true })) {
       const _edit_id = `__EDIT__${getUniqueStr()}`
       this.$store.commit("push", { key: "presets", value: {
-          _id: null,
           _edit_id,
           presetId: null,
           presetName: "",
@@ -85,7 +84,8 @@ export default Vue.extend({
           alert(this.$t("you-should-have-one-or-more-presets"))
           return
         }
-        this.$root.$data.socket.operate("query/create", { query: { presetId: this.$store.state.presets[0]._id } })
+        const presetId = this.$store.state.presets[0]._id
+        this.$root.$data.socket.operate("query/create", { query: { presetId } })
           .then(data => {
             for (const id of this.$store.state.selectedRenderInstances) {
               const renderInstance = this.$store.state.renderInstances.find(e => e.renderInstanceId === id)
@@ -94,7 +94,7 @@ export default Vue.extend({
                 options: { queries: renderInstance.options.queries.concat([data._id]) }
               })
             }
-            this.$store.commit("push", { key: "queriesShowing", value: { _id: data._id }})
+            this.$store.commit("push", { key: "queriesShowing", value: { _id: data._id, presetId }})
             this.$store.commit("set", { key: "editingQueries", value: [ data._id ] })
           })
       }
@@ -112,9 +112,13 @@ export default Vue.extend({
       const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ?
                                                 [...d, ...flatten(e)] :
                                                 [...d, e ], [])
-      const qs = this.$store.state.renderInstances.filter(e => newVal.some(x => x === e.renderInstanceId))
+      const qs = newVal.filter((e, i, arr) => arr.indexOf(e) === i)
+                       .map(e => this.$store.state.renderInstances.find(x => x.renderInstanceId === e))
+                       .filter(e => e)
+                       .map(e => e.options.queries)
+      /*const qz = this.$store.state.renderInstances.filter(e => newVal.some(x => x === e.renderInstanceId))
                                                   .map(e => e.options.queries)
-                                                  .filter((e, i, arr) => arr.indexOf(e) === i)
+                                                  .filter((e, i, arr) => arr.indexOf(e) === i)*/
       this.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
         .then(data => this.$store.commit("set", { key: "queriesShowing", value: data.queries }))
     }
@@ -123,4 +127,6 @@ export default Vue.extend({
 })
 </script>
 <style lang="stylus" scoped>
+.query-list
+  flex-grow: 1
 </style>

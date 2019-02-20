@@ -31,6 +31,7 @@ import {
   faPen,
   faPlus,
   faSave,
+  faTimes,
   faTrash
 } from "@fortawesome/free-solid-svg-icons"
 
@@ -39,6 +40,7 @@ library.add(
   faPen,
   faPlus,
   faSave,
+  faTimes,
   faTrash
 )
 

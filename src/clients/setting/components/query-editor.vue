@@ -1,6 +1,6 @@
 <template lang="pug">
-v-flex(xs6).query-editor
-  v-card(v-if="editing && editing.length > 0").edit
+v-flex(xs6).query-editor.h-100
+  v-card(v-if="editing && editing.length > 0").edit.column
     v-toolbar
       v-toolbar-title {{ presetName || (ids && ids.join(', ')) || $t("new-query") }}
     v-form
@@ -20,7 +20,7 @@ v-flex(xs6).query-editor
                   outline
                   :hide-details="true"
                 )
-            v-layout(v-if="text")
+            v-layout()
               v-flex(
                 v-for="(part, i) in text"
                 :key="i"
@@ -32,7 +32,7 @@ v-flex(xs6).query-editor
                   outline
                   :hide-details="true"
                 )
-            v-layout(v-if="replace")
+            v-layout()
               v-flex(xs6).px-1
                 v-btn(block color="error" @click="pushTexts")
                   font-awesome-icon(icon="plus" fixed-width)
@@ -43,17 +43,19 @@ v-flex(xs6).query-editor
                   | {{ $t("pop-text") }}
           //- others
           v-flex(xs12)
-            v-layout
-              v-flex(xs6).ma-1
+            v-layout(row wrap)
+              v-flex(xs4 v-if="presetId !== null").ma-1
                 v-select(
-                  v-if="presetId !== null"
                   :items="$store.state.presets"
                   v-model="presetId"
                   item-text="presetName"
                   item-value="_id"
+                  :hint="$t('preset')"
+                  persistent-hint
+                  outline
                 )
 
-              v-flex(xs6).ma-1
+              v-flex(xs4).ma-1
                 v-text-field(
                   v-model="timeout"
                   :label="$t('timeout')"
@@ -63,7 +65,7 @@ v-flex(xs6).query-editor
                   mask="##########"
                 )
 
-              v-flex(xs6).ma-1
+              v-flex(xs4).ma-1
                 v-text-field(
                   v-model="classStr"
                   :label="$t('class')"
@@ -71,20 +73,20 @@ v-flex(xs6).query-editor
                   :hide-details="true"
                 )
 
-              v-flex(xs6).ma-1
-                v-flex()
-                  v-select(
-                    :items="['end', 'middle', 'start']"
-                    v-model="anchor"
-                    :hint="$t('align')"
-                  )
+              v-flex(xs4).ma-1
+                v-select(
+                  :items="['end', 'middle', 'start']"
+                  v-model="anchor"
+                  :hint="$t('align')"
+                  persistent-hint
+                  outline
+                )
 
-            div(v-if="stretch === true || stretch === false")
-              v-switch(
-                v-model="stretch"
-                :label="$t('stretch')"
-              )
-
+              v-flex(xs4 v-if="stretch === true || stretch === false")
+                v-switch(
+                  v-model="stretch"
+                  :label="$t('stretch')"
+                )
 
           //- monaco
           v-flex(xs12)
@@ -95,6 +97,8 @@ v-flex(xs6).query-editor
               item-text="text"
               item-value="key"
               return-object
+              :hint="$t('editor')"
+              persistent-hint
             )
             monaco-editor(
               v-if="editableTexts && editingText"
@@ -105,24 +109,31 @@ v-flex(xs6).query-editor
 
           //- save
           v-flex(xs12)
-            v-layout(
-              v-show="!isNewQuery"
-            )
-              v-flex
+            v-layout
+              v-flex(v-if="!editId").ma-1
                 v-btn(
                   block
                   color="info"
                   @click="save"
-                ).ma-1
+                )
                   font-awesome-icon(icon="save" fixed-width)
                   | {{ $t("save") }}
+              v-flex(v-if="!editId").ma-1
                 v-btn(
                   block
                   color="error"
                   @click="remove"
-                ).ma-1
+                )
                   font-awesome-icon(icon="trash" fixed-width)
                   | {{ $t("remove") }}
+              v-flex(v-if="editId").ma-1
+                v-btn(
+                  block
+                  color="error"
+                  @click="cancel"
+                )
+                  font-awesome-icon(icon="times" fixed-width)
+                  | {{ $t("cancel") }}
 
             v-text-field(
               v-model="presetName"
@@ -153,6 +164,155 @@ import equal from "deep-equal"
 
 const i18n = I18n("components/query-editor")
 
+const renew = (component: Vue) => {
+  const editing = component.$store.state.editingQueries
+  const res = {
+      ids: null,
+      presetId: null,
+      presetName: null,
+      text: null,
+      innerHtml: null,
+      replace: null,
+      timeout: null,
+      classStr: null,
+      stretch: null,
+      func: null,
+      anchor: null,
+      tab: null,
+      editingText: null,
+      editableTexts: [],
+      editId: null
+    }
+  const store = component.$store
+  const queries = editing.map(e => {
+    return (store.state.presets
+    .concat(store.state.queriesShowing))
+    .find(x => x._id === e || x._edit_id === e)
+  })
+  console.log(editing)
+  console.log(queries)
+  if (!$.arr($.obj()).min(0).ok(queries)) return
+  const qs = {
+    ids: [],
+    presetId: [],
+    presetName: [],
+    replace: [],
+    text: [],
+    innerHtml: [],
+    timeout: [],
+    classStr: [],
+    stretch: [],
+    func: [],
+    anchor: [],
+    editId: []
+  }
+  for (const query of queries) {
+    for (const key in qs) {
+      switch (key) {
+        case "ids":
+          qs.ids.push(query._id)
+          break
+        case "editId":
+          qs.editId.push(query._edit_id)
+          break
+        case "replace":
+          qs.replace.push(query.replace ? [].concat(query.replace) : [""])
+          break
+        case "class":
+          qs.classStr.push(query.class)
+          break
+        case "text":
+          qs.text.push((query.text || query.replace) ? [].concat(query.text || query.replace) : [""])
+          break
+        default:
+          qs[key].push(query[key])
+      }
+    }
+  }
+  let filtered = {} as { [key: string]: any }
+
+  for (const key in qs) {
+    filtered[key] = qs[key].filter((e, i, self) => {
+      if (e === undefined) return false
+      return self.findIndex(x => equal(e, x, { strict: true })) === i
+    })
+  }
+  console.log(filtered)
+
+  if (filtered.presetId.length === 1) {
+    res.presetId = filtered.presetId[0]
+  } else {
+    res.presetId = null
+  }
+
+  let preset = res.presetId ? component.$store.state.presets.find(e => e._id === filtered.presetId[0]) : null
+  if (preset) preset = Object.assign({}, preset)
+
+  for (const key in qs) {
+    switch (key) {
+    case "ids":
+      res.ids = qs.ids.filter(e => e)
+      break
+    case "presetId":
+      break
+    case "text":
+      if (filtered.text.length === 1) {
+        res.text = filtered.text[0]
+        break
+      }
+      res.text = preset ? preset.text ? preset.text : preset.replace || [""] : [""]
+      break
+    case "replace":
+      if (filtered.replace.length === 1) {
+        res.replace = filtered.replace[0]
+        break
+      }
+      res.replace = preset ? preset.replace : [""]
+      break
+    case "presetName":
+      if (filtered.presetName.length === 1) {
+        res.presetName = filtered.presetName[0]
+        break
+      }
+      res[key] = null
+      break
+    default:
+      if (filtered[key].length === 1) {
+        res[key] = filtered[key][0]
+        break
+      }
+      res[key] = preset ? preset[key] : key === "stretch" ? false : null
+    }
+  }
+
+  if (res.text && res.replace) {
+    if (res.text.length > res.replace.length) res.text.splice(0, res.replace.length)
+    else if (res.text.length < res.replace.length) {
+      for (let i = 0; i < res.replace.length - res.text.length; i += 0) {
+        res.text.push(res.replace[res.text.length + i])
+      }
+    }
+  }
+  res.editableTexts = []
+  if (res.innerHtml || res.innerHtml === "") res.editableTexts = res.editableTexts.concat([
+      {
+        text: component.$t("html"),
+        key: "innerHtml",
+        language: "html"
+      }
+    ])
+  if (res.func || res.func === "") res.editableTexts = res.editableTexts.concat([
+      {
+        text: component.$t("function"),
+        key: "func",
+        language: "javascript"
+      }
+    ])
+  res.editingText = res.editableTexts ? res.editableTexts[0] : null
+
+  return res
+}
+
 export default Vue.extend({
   name: "source-list-item",
   props: {
@@ -181,26 +341,22 @@ export default Vue.extend({
   },
   computed: {
     preset() {
-      if (!this.$data.presetId) return null
-      return this.$store.state.presets.find(e => e._id === this.$data.presetId)
+      return this.$data.presetId ? this.$store.state.presets.find(e => e._id === this.$data.presetId) : null
     },
     editing() {
       return this.$store.state.editingQueries
-    },
-    isNewQuery() {
-      return !(this.$data.ids && this.$data.ids.filter(e => e).length !== 0)
     }
   },
   mounted() {
   },
   methods: {
     pushTexts(ev: MouseEvent) {
-      this.text ? this.text.push("") : this.text = [""]
-      this.replace ? this.replace.push("") : this.replace = [""]
+      this.$data.text ? this.$data.text.push("") : this.$data.text = [""]
+      this.$data.replace ? this.$data.replace.push("") : this.$data.replace = [""]
     },
     popTexts(ev: MouseEvent) {
-      this.text && this.text.length > 0 ? this.text.pop() : this.text = []
-      this.replace && this.replace.length > 0 ? this.replace.pop() : this.replace = []
+      this.$data.text && this.$data.text.length > 0 ? this.$data.text.pop() : this.$data.text = []
+      this.$data.replace && this.$data.replace.length > 0 ? this.$data.replace.pop() : this.$data.replace = []
     },
     save(ev: MouseEvent) {
       const query = {} as { [key: string]: any }
@@ -221,13 +377,14 @@ export default Vue.extend({
             if (
               this.$data.classStr !== null &&
               this.preset ?
-              this.preset.classStrthis.$data.classStr : true
+              this.preset.classStr : true
             ) query.class = this.$data.classStr
+            break
           default:
             if (
               this.$data[key] !== null &&
               this.preset ?
-              this.preset.classStrthis.$data[key] : true
+              this.$data[key] : true
             ) query[key] = this.$data[key]
         }
       }
@@ -245,6 +402,11 @@ export default Vue.extend({
         this.$store.commit("removeByKeyTest", { key: "presets", testKey: "_edit_id", testValue: this.$data.editId })
         this.$data.editId = null
       }
+    },
+    cancel(ev: MouseEvent) {
+      this.$store.commit("remove", { key: "editingQueries", value: this.$data.editId })
+      this.$store.commit("removeByKeyTest", { key: "presets", testKey: "_edit_id", testValue: this.$data.editId })
+      this.$data.editId = null
     },
     savePreset(ev: MouseEvent) {
       if (!this.$data.presetName) alert(this.$t("you-should-fill-in-preset-name"))
@@ -285,137 +447,16 @@ export default Vue.extend({
     }
   },
   watch: {
-    editing(newVal, oldVal) {/*
-      if (newVal.length === 1 && newVal[0]._id === null) {
-
-        return
-      }*/
-      const store = this.$store
-      const queries = newVal.map(e => {
-        return (store.state.presets
-        .concat(store.state.queriesShowing))
-        .find(x => x._id === e || x._edit_id === e)
-      })
-      console.log(newVal)
-      console.log(queries)
-      console.log(store.state.presets.concat(store.state.queriesShowing))
-      if (!$.arr($.obj()).min(0).ok(queries)) return
-      const qs = {
-        ids: [],
-        presetId: [],
-        presetName: [],
-        replace: [],
-        text: [],
-        innerHtml: [],
-        timeout: [],
-        classStr: [],
-        stretch: [],
-        func: [],
-        anchor: [],
-        editId: []
+    editing(newVal, oldVal) {
+      const res = renew(this)
+      for (const key in res) {
+        this.$data[key] = res[key]
       }
-      for (const query of queries) {
-        for (const key in qs) {
-          switch (key) {
-            case "ids":
-              qs.ids.push(query._id)
-              break
-            case "editId":
-              qs.ids.push(query._edit_id)
-              break
-            case "replace":
-              qs.replace.push(query.replace ? [].concat(query.replace) : null)
-              break
-            case "class":
-              qs.classStr.push(query.class)
-            case "text":
-              qs.text.push((query.text || query.replace) ? [].concat(query.text || query.replace) : null)
-              break
-            default:
-              qs[key].push(query[key])
-          }
-        }
-      }
-      //console.log(qs)
-      for (const key in qs) {
-        const filtered = qs[key].filter((e, i, self) => {
-          if (e === undefined) return false
-          return self.findIndex(x => equal(e, x, { strict: true })) === i
-        })
-        //console.log(filtered)
-        if (key === "ids") {
-          this.$data.ids = qs.ids
-          continue
-        }
-        if (filtered.length > 1){
-          this.$data[key] = null
-        } else if (filtered.length === 1) {
-          this.$data[key] = filtered[0]
-        } else {
-          this.$data[key] = null
-        }
-      }
-
-      if (this.$data.text && this.$data.replace) {
-        if (this.$data.text.length > this.$data.replace.length) this.$data.text.splice(0, this.$data.replace.length)
-        else if (this.$data.text.length < this.$data.replace.length) {
-          for (let i = 0; i < this.$data.replace.length - this.$data.text.length; i += 0) {
-            this.$data.text.push(this.$data.replace[this.$data.text.length + i])
-          }
-        }
-      }
-      this.$data.editableTexts = []
-      if (this.$data.innerHtml || this.$data.innerHtml === "") this.$data.editableTexts = this.$data.editableTexts.concat([
-          {
-            text: this.$t("html"),
-            key: "innerHtml",
-            language: "html"
-          }
-        ])
-      if (this.$data.func || this.$data.func === "") this.$data.editableTexts = this.$data.editableTexts.concat([
-          {
-            text: this.$t("function"),
-            key: "func",
-            language: "javascript"
-          }
-        ])
-      this.editingText = this.$data.editableTexts ? this.$data.editableTexts[0] : null
     },
     preset(newVal, oldVal) {
-      if (newVal) {
-        this.$data.replace = (this.$data.replace || newVal.replace || []).concat
-        this.$data.text = (this.$data.text || newVal.text || this.$data.replace || newVal.replace || []).concat
-        this.$data.innerHtml = this.$data.innerHtml || newVal.innerHtml || null
-        this.$data.timeout = this.$data.timeout || newVal.timeout || null
-        this.$data.classStr = this.$data.classStr || newVal.class || null
-        this.$data.stretch = this.$data.stretch || newVal.stretch || false
-        this.$data.func = this.$data.function || newVal.function || null
-        this.$data.anchor = this.$data.anchor || newVal.anchor || null
-
-        if (this.$data.text && this.$data.replace) {
-          if (this.$data.text.length > this.$data.replace.length) this.$data.text.splice(0, this.$data.replace.length)
-          else if (this.$data.text.length < this.$data.replace.length) {
-            for (let i = 0; i < this.$data.replace.length - this.$data.text.length; i += 0) {
-              this.$data.text.push(this.$data.replace[this.$data.text.length + i])
-            }
-          }
-        }
-        this.$data.editableTexts = []
-        if (this.$data.innerHtml || this.$data.innerHtml === "") this.$data.editableTexts = this.$data.editableTexts.concat([
-            {
-              text: this.$t("html"),
-              key: "innerHtml",
-              language: "html"
-            }
-          ])
-        if (this.$data.func || this.$data.func === "") this.$data.editableTexts = this.$data.editableTexts.concat([
-            {
-              text: this.$t("function"),
-              key: "func",
-              language: "javascript"
-            }
-          ])
-        this.editingText = this.$data.editableTexts ? this.$data.editableTexts[0] : null
+      const res = renew(this)
+      for (const key in res) {
+        this.$data[key] = res[key]
       }
     }
   },
