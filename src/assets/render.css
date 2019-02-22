@@ -8,23 +8,13 @@ html {
   overflow: hidden;
 }
 
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0;
-}
-
-#client { /* クライアント(svgの表示範囲) */
-  height: 60vh; /* 高さ (nvh = ブラウザソース高さのn%) */
-  width: 90vw; /* 幅 (nvw = ブラウザソース幅のn%) */
+.client { /* クライアント(svgの表示範囲) */
   position: relative;
 }
 
 .wrapper { /* 覆いの大きさ */
   height: 100%; /* クライアントと同じ(100%) */
   width: 100%; /* クライアントと同じ(100%) */
-  transform-origin: center; /* 変形の基準位置 */
   overflow: visible;
   position: absolute;
   top: 0;
@@ -36,6 +26,7 @@ svg { /* svgの大きさ */
   width: 100%; /* クライアントと同じ(100%) */
   transform-origin: left top; /* 変形の基準位置 */
   overflow: visible;
+  opacity: 0;
 }
 
 /*    アニメーション(表示)    */
@@ -55,6 +46,7 @@ svg { /* svgの大きさ */
 svg.show {
   animation-duration: 1s;
   animation-name: fadeInUp;
+  opacity: 1;
 }
 
 /*    アニメーション(消滅)   */
@@ -70,7 +62,7 @@ svg.show {
   }
 }
 
-svg:not(.show) {
+svg.hide {
   animation-duration: 1s;
   animation-name: fadeOutUp;
   opacity: 0;

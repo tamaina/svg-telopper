@@ -1,8 +1,14 @@
-import { ISocketData } from "../../models/socketData"
 import { getUniqueStr } from "../scripts/getUniqueStr"
 import onReady from "../scripts/onReady"
 import { Socket } from "../scripts/socket"
 import { STW } from "../scripts/stw"
+
+declare global {
+// tslint:disable-next-line: interface-name
+  interface Window {
+    stw: STW
+  }
+}
 
 const init = () => {
   const socket = new Socket()
@@ -11,7 +17,7 @@ const init = () => {
 
   location.hash = `#${renderInstanceId}`
 
-  new STW(document.body, renderInstanceId, socket)
+  window.stw = new STW(document.body, renderInstanceId, socket)
 
   const rootRect = document.body.getBoundingClientRect()
 

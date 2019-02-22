@@ -4,7 +4,7 @@ import db from "./db"
 
 import { STServer } from "."
 import { IQuery } from "../models/queries"
-import { ISocketData, ISocketRequestData } from "../models/socketData"
+import { ISocketData, ISocketRequestData, ISocketResponseData } from "../models/socketData"
 import operations from "./api/operations"
 
 const onRenderInstanceConnected = async (
@@ -17,8 +17,14 @@ const onRenderInstanceConnected = async (
   const { renderInstanceId } = data.body
   log(`新しい描画インスタンスが接続されました: #${renderInstanceId}`)
 
+  const res = {} as any
+
   if (await db.renderInstances.findOne({ renderInstanceId })) {
-    db.renderInstances.update({ renderInstanceId }, { $inc: { connectionCount: 1 } }, { upsert: true })
+    res.body = await db.renderInstances.update(
+      { renderInstanceId },
+      { $inc: { connectionCount: 1 } },
+      { upsert: true, returnUpdatedDocs: true }
+    )
   } else {
     const onePreset = await db.queries.findOne({})
     if (!onePreset) {
@@ -31,12 +37,12 @@ const onRenderInstanceConnected = async (
       options: {
         queries: [newQuery._id],
         reverse: false,
-        stretch: false,
         showingIndex: 0
       },
       connectionCount: 1
     }
-    db.renderInstances.insert(instance)
+    res.body = instance
+    await db.renderInstances.insert(instance)
     server.ws.broadcast(JSON.stringify({
       type: "response",
       body: {
@@ -45,6 +51,9 @@ const onRenderInstanceConnected = async (
       }
     }))
   }
+  res.type = "renderInstanceInfo"
+  res.body.type = "initializeRenderInstance"
+  server.ws.broadcast(JSON.stringify(res))
 
   const renderInstanceDied = () => {
     log(`描画インスタンスは切断されました: #${renderInstanceId}`)

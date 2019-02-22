@@ -1,6 +1,9 @@
 export interface ISTWOptions {
   queries: string[]
   reverse?: boolean
+  clientWidth: string
+  clientHeight: string
+  showingIndex: number
 }
 export interface IQuery {
   presetId?: string
@@ -12,7 +15,8 @@ export interface IQuery {
   timeout: number
   class: string
   stretch: boolean
-  function: string
+  func: string
+  style: string
   anchor: "start" | "end" | "middle"
 }
 

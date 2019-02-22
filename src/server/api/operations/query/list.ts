@@ -38,15 +38,31 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   const dbqs = []
-  if (request.body.option.ids) {
-    dbqs.push({ _id: { $in: request.body.option.ids } })
+  if ($.bool.ok(request.body.option.isPreset)) {
+    if (request.body.option.isPreset === true) {
+      dbqs.push({ $where() {
+        return this.presetName !== null && this.presetName !== undefined
+      } })
+    } else {
+      dbqs.push({ $where() {
+        return this.presetName === null || this.presetName === undefined
+      } })
+    }
   }
-  if ($.bool.ok(request.body.option.isPreset)) dbqs.push({ presetName: { $exists: request.body.option.isPreset } })
 
   return {
     type: "queriesList",
     ids: request.body.option.ids,
     isPreset: request.body.option.isPreset,
-    queries: dbqs.length > 0 ? await db.queries.find({$and: dbqs}) : await db.queries.find({})
+    queries: request.body.option.ids ?
+             dbqs.length > 0 ?
+               await Promise.all(
+                 request.body.option.ids.map(id => db.queries.findOne({ $and: dbqs.concat([{ _id: id }]) }))
+               ) :
+               await Promise.all(
+                 request.body.option.ids.map(id => db.queries.findOne({ _id: id }))
+               ) :
+             dbqs.length > 0 ?
+               await db.queries.find({ $and: dbqs }) : await db.queries.find({})
   }
 }

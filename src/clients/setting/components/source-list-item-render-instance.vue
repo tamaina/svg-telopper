@@ -35,7 +35,7 @@ export default Vue.extend({
       this.$store.commit("set", { key: "selectedRenderInstances", value: [this.$props.renderInstance.renderInstanceId]})
     },
     renderInstanceClickedWCtrl(ev: MouseEvent) {
-      if (this.$store.state.selectedRenderInstances.some(e => e === this.$data.source.name)) {
+      if (this.$store.state.selectedRenderInstances.some(e => e === this.$props.renderInstance.renderInstanceId)) {
         this.$store.commit("remove", { key: "selectedRenderInstances", value: this.$props.renderInstance.renderInstanceId})
       } else {
         this.$store.commit("push", { key: "selectedRenderInstances", value: this.$props.renderInstance.renderInstanceId})

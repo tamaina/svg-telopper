@@ -1,8 +1,8 @@
 <template lang="pug">
-v-flex(xs6).query-editor.h-100
+v-flex(xs5).query-editor.h-100
   v-card(v-if="editing && editing.length > 0").edit.column
     v-toolbar
-      v-toolbar-title {{ presetName || (ids && ids.join(', ')) || $t("new-query") }}
+      v-toolbar-title {{ presetName ? `${presetName}${ids ? ` (#${ids.join(', #')})` : ''}` : `#${ids && ids.join(', #')}` || $t("new-query") }}
     v-form
       v-container(grid-list-xs fluid)
         v-layout(row wrap)
@@ -11,8 +11,8 @@ v-flex(xs6).query-editor.h-100
             v-layout(v-if="replace")
               v-flex(
                 v-for="(part, i) in replace"
-                :key="i"
-              ).ma-1
+                :key="`${i}${ids.join('.')}`"
+              ).pa-1
                 v-text-field(
                   v-model="replace[i]"
                   :label="$t('replacer-text')"
@@ -23,8 +23,8 @@ v-flex(xs6).query-editor.h-100
             v-layout()
               v-flex(
                 v-for="(part, i) in text"
-                :key="i"
-              ).ma-1
+                :key="`${i}${ids.join('.')}`"
+              ).pa-1
                 v-text-field(
                   v-model="text[i]"
                   :label="$t('replacing-text')"
@@ -44,18 +44,18 @@ v-flex(xs6).query-editor.h-100
           //- others
           v-flex(xs12)
             v-layout(row wrap)
-              v-flex(xs4 v-if="presetId !== null").ma-1
+              v-flex(xs4 v-if="presetId !== null").pa-1
                 v-select(
                   :items="$store.state.presets"
                   v-model="presetId"
                   item-text="presetName"
                   item-value="_id"
-                  :hint="$t('preset')"
-                  persistent-hint
+                  :label="$t('preset')"
                   outline
+                  :hide-details="true"
                 )
 
-              v-flex(xs4).ma-1
+              v-flex(xs4).pa-1
                 v-text-field(
                   v-model="timeout"
                   :label="$t('timeout')"
@@ -65,7 +65,7 @@ v-flex(xs6).query-editor.h-100
                   mask="##########"
                 )
 
-              v-flex(xs4).ma-1
+              v-flex(xs4).pa-1
                 v-text-field(
                   v-model="classStr"
                   :label="$t('class')"
@@ -73,20 +73,20 @@ v-flex(xs6).query-editor.h-100
                   :hide-details="true"
                 )
 
-              v-flex(xs4).ma-1
+              v-flex(xs4).pa-1
                 v-select(
                   :items="['end', 'middle', 'start']"
                   v-model="anchor"
-                  :hint="$t('align')"
-                  persistent-hint
+                  :label="$t('align')"
                   outline
+                  :hide-details="true"
                 )
 
-              v-flex(xs4 v-if="stretch === true || stretch === false")
-                v-switch(
-                  v-model="stretch"
-                  :label="$t('stretch')"
-                )
+          v-flex(xs12 v-if="stretch === true || stretch === false")
+            v-switch(
+              v-model="stretch"
+              :label="$t('stretch')"
+            )
 
           //- monaco
           v-flex(xs12)
@@ -97,8 +97,9 @@ v-flex(xs6).query-editor.h-100
               item-text="text"
               item-value="key"
               return-object
-              :hint="$t('editor')"
-              persistent-hint
+              :label="$t('editor')"
+              outline
+              :hide-details="true"
             )
             monaco-editor(
               v-if="editableTexts && editingText"
@@ -110,7 +111,7 @@ v-flex(xs6).query-editor.h-100
           //- save
           v-flex(xs12)
             v-layout
-              v-flex(v-if="!editId").ma-1
+              v-flex(v-if="!editId").pa-1
                 v-btn(
                   block
                   color="info"
@@ -118,7 +119,7 @@ v-flex(xs6).query-editor.h-100
                 )
                   font-awesome-icon(icon="save" fixed-width)
                   | {{ $t("save") }}
-              v-flex(v-if="!editId").ma-1
+              v-flex(v-if="!editId").pa-1
                 v-btn(
                   block
                   color="error"
@@ -126,7 +127,7 @@ v-flex(xs6).query-editor.h-100
                 )
                   font-awesome-icon(icon="trash" fixed-width)
                   | {{ $t("remove") }}
-              v-flex(v-if="editId").ma-1
+              v-flex(v-if="editId").pa-1
                 v-btn(
                   block
                   color="error"
@@ -148,7 +149,7 @@ v-flex(xs6).query-editor.h-100
               @click="savePreset"
             ).ma-1 {{ $t("save-preset") }}
 
-  v-card(v-else)
+  v-card(v-else).column
     v-toolbar
       v-toolbar-title {{ $t("nothing") }}
     .empty.py-5.px-3.text-xs-center {{ $t("empty") }}
@@ -164,7 +165,7 @@ import equal from "deep-equal"
 
 const i18n = I18n("components/query-editor")
 
-const renew = (component: Vue) => {
+const renew = (component: Vue, mpreset?: any) => {
   const editing = component.$store.state.editingQueries
   const res = {
       ids: null,
@@ -177,6 +178,7 @@ const renew = (component: Vue) => {
       classStr: null,
       stretch: null,
       func: null,
+      style: null,
       anchor: null,
       tab: null,
       editingText: null,
@@ -203,6 +205,7 @@ const renew = (component: Vue) => {
     classStr: [],
     stretch: [],
     func: [],
+    style: [],
     anchor: [],
     editId: []
   }
@@ -216,13 +219,11 @@ const renew = (component: Vue) => {
           qs.editId.push(query._edit_id)
           break
         case "replace":
-          qs.replace.push(query.replace ? [].concat(query.replace) : [""])
-          break
-        case "class":
-          qs.classStr.push(query.class)
-          break
         case "text":
-          qs.text.push((query.text || query.replace) ? [].concat(query.text || query.replace) : [""])
+          qs[key].push(query[key] ? [].concat(query[key]) : undefined)
+          break
+        case "classStr":
+          qs.classStr.push(query.class)
           break
         default:
           qs[key].push(query[key])
@@ -239,13 +240,17 @@ const renew = (component: Vue) => {
   }
   console.log(filtered)
 
-  if (filtered.presetId.length === 1) {
-    res.presetId = filtered.presetId[0]
+  if (!mpreset) {
+    if (filtered.presetId.length === 1) {
+      res.presetId = filtered.presetId[0]
+    } else {
+      res.presetId = null
+    }
   } else {
-    res.presetId = null
+    res.presetId = mpreset._id
   }
 
-  let preset = res.presetId ? component.$store.state.presets.find(e => e._id === filtered.presetId[0]) : null
+  let preset = mpreset || (res.presetId ? component.$store.state.presets.find(e => e._id === filtered.presetId[0]) : null)
   if (preset) preset = Object.assign({}, preset)
 
   for (const key in qs) {
@@ -260,7 +265,7 @@ const renew = (component: Vue) => {
         res.text = filtered.text[0]
         break
       }
-      res.text = preset ? preset.text ? preset.text : preset.replace || [""] : [""]
+      res.text = preset ? preset.text ? preset.text : (preset.replace || [""]) : [""]
       break
     case "replace":
       if (filtered.replace.length === 1) {
@@ -274,7 +279,7 @@ const renew = (component: Vue) => {
         res.presetName = filtered.presetName[0]
         break
       }
-      res[key] = null
+      res.presetName = null
       break
     default:
       if (filtered[key].length === 1) {
@@ -285,29 +290,23 @@ const renew = (component: Vue) => {
     }
   }
 
-  if (res.text && res.replace) {
-    if (res.text.length > res.replace.length) res.text.splice(0, res.replace.length)
-    else if (res.text.length < res.replace.length) {
-      for (let i = 0; i < res.replace.length - res.text.length; i += 0) {
-        res.text.push(res.replace[res.text.length + i])
-      }
+  if (res.text.length > res.replace.length) res.text.splice(0, res.replace.length)
+  else if (res.text.length < res.replace.length) {
+    for (let i = 0; i < res.replace.length - res.text.length; i += 0) {
+      res.text.push(res.replace[res.text.length + i])
     }
   }
+
   res.editableTexts = []
-  if (res.innerHtml || res.innerHtml === "") res.editableTexts = res.editableTexts.concat([
-      {
-        text: component.$t("html"),
-        key: "innerHtml",
-        language: "html"
-      }
-    ])
-  if (res.func || res.func === "") res.editableTexts = res.editableTexts.concat([
-      {
-        text: component.$t("function"),
-        key: "func",
-        language: "javascript"
-      }
-    ])
+  if (res.innerHtml || res.innerHtml === "") res.editableTexts.push(
+      { text: component.$t("html"), key: "innerHtml", language: "html" }
+    )
+  if (res.func || res.func === "") res.editableTexts.push(
+      { text: component.$t("function"), key: "func", language: "javascript" }
+    )
+  if (res.style || res.style === "") res.editableTexts.push(
+      { text: component.$t("style"), key: "style", language: "css" }
+    )
   res.editingText = res.editableTexts ? res.editableTexts[0] : null
 
   return res
@@ -329,8 +328,8 @@ export default Vue.extend({
       classStr: null,
       stretch: null,
       func: null,
+      style: null,
       anchor: null,
-      tab: null,
       editingText: null,
       editableTexts: [],
       editId: null
@@ -361,6 +360,7 @@ export default Vue.extend({
     save(ev: MouseEvent) {
       const query = {} as { [key: string]: any }
       const targetKeys = [
+        "presetName",
         "replace",
         "text",
         "innerHtml",
@@ -368,24 +368,30 @@ export default Vue.extend({
         "class",
         "stretch",
         "func",
+        "style",
         "anchor"
       ]
       query.class = this.$data.class
       for (const key of targetKeys) {
         switch (key) {
-          case "class":
-            if (
-              this.$data.classStr !== null &&
-              this.preset ?
-              this.preset.classStr : true
-            ) query.class = this.$data.classStr
-            break
-          default:
-            if (
-              this.$data[key] !== null &&
-              this.preset ?
-              this.$data[key] : true
-            ) query[key] = this.$data[key]
+        case "class":
+          if (
+            this.$data.classStr !== null && (
+              this.$data.preset ?
+              (this.$data.classStr !== this.preset.class) :
+              true )
+          ) query.class = this.$data.classStr
+          break
+        case "presetName":
+          if (this.$data.presetName !== null) query.presetName = this.$data.presetName
+          break
+        default:
+          if (
+            this.$data[key] !== null && (
+              this.$data.preset ?
+              !equal(this.$data[key], this.preset[key], { strict: true }) :
+              true )
+          ) query[key] = this.$data[key]
         }
       }
       const vdata = this.$data
@@ -419,6 +425,7 @@ export default Vue.extend({
         class: '',
         stretch: false,
         func: '',
+        style: '',
         anchor: 'middle'
       }
       for (const key in query) {
@@ -454,7 +461,7 @@ export default Vue.extend({
       }
     },
     preset(newVal, oldVal) {
-      const res = renew(this)
+      const res = renew(this, newVal)
       for (const key in res) {
         this.$data[key] = res[key]
       }

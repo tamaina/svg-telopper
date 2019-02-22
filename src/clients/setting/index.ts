@@ -27,6 +27,7 @@ declare global {
 Vue.component("font-awesome-icon", FontAwesomeIcon)
 
 import {
+  faCheck,
   faMinus,
   faPen,
   faPlus,
@@ -36,6 +37,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons"
 
 library.add(
+  faCheck,
   faMinus,
   faPen,
   faPlus,

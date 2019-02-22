@@ -1,4 +1,5 @@
 import $ from "cafy"
+import * as extend from "extend"
 
 import { STServer } from "../../.."
 import { ISocketRequestData } from "../../../../models/socketData"
@@ -40,13 +41,16 @@ export default async (server: STServer, request: ISocketRequestData) => {
   const b = await db.renderInstances.findOne(
     { renderInstanceId: request.body.option.renderInstanceId }
   )
+  if (!b) {
+    server.message("指定された描画インスタンスは見つかりませんでした。", "error")
+  }
   server.broadcastData({
     type: "update",
     body: {
       type: "renderInstanceUpdated",
       query: await db.renderInstances.update(
         { renderInstanceId: request.body.option.renderInstanceId },
-        { $set: { options: Object.assign(b.options, request.body.option.options) } },
+        { $set: { options: extend(true, {}, b.options, request.body.option.options) } },
         { returnUpdatedDocs: true }
       )
     }

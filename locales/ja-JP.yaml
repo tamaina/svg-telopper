@@ -28,6 +28,10 @@ components/query-list:
 components/render-instance-setting:
   reverse: 表示順を逆転
   show: 表示するクエリ
+  client-width: クライアント幅
+  client-height: クライアント高
+  css-value: CSS値
+  apply: 適用
 components/query-editor:
   empty: 編集するものはありません。
   new-query: 新しいクエリ
@@ -42,8 +46,9 @@ components/query-editor:
   timeout: タイムアウト
   class: クラス
   stretch: 枠に合わせて変形
-  html: HTML/SVG/CSS
+  html: HTML/SVG
   function: 関数
+  style: スタイルシート
   push-text: フィールドを追加
   pop-text: フィールドを削除
   anchor: アンカー

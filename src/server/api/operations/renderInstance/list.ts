@@ -29,12 +29,25 @@ export const meta = {
     }
   }
 } as IEndpointInfo
-
+/*
+return {
+  type: "queriesList",
+  ids: request.body.option.ids,
+  isPreset: request.body.option.isPreset,
+  queries: dbqs.length > 0 ?
+             request.body.option.ids ?
+                await Promise.all(
+                    request.body.option.ids.map(id => db.queries.find({ $and: dbqs.concat([ { _id: id } ]) }))
+                  ) :
+                await db.queries.find({$and: dbqs}) :
+              await db.queries.find({})
+}*/
 export default async (server: STServer, request: ISocketRequestData) => {
   return {
     type: "renderInstancesList",
     renderInstances: request.body.option.ids && meta.params.ids.validator.ok(request.body.option.ids)
-                      ? await db.renderInstances.find({ renderInstanceId: { $in: request.body.option.ids } })
-                      : await db.renderInstances.find({})
+                      ? await Promise.all(
+                        request.body.option.ids.map(renderInstanceId => db.queries.findOne({renderInstanceId}))
+                      ) : await db.renderInstances.find({})
   }
 }

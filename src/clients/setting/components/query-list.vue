@@ -4,59 +4,129 @@ v-flex(grow).query-list
     v-toolbar
       v-toolbar-title {{ $t("@.words.query") }}
       v-spacer
-      v-btn(icon v-show="$store.state.activeSources.length === 1" @click="addNewQuery")
+      v-btn(icon v-show="oneInstanceSelected" @click="addNewQuery")
         font-awesome-icon(icon="plus")
     v-list(v-if="queries.length > 0")
-      v-list-tile(
-        v-for="query in queries"
-        :key="query._id || query._edit_id"
-        @click.exact="listClicked"
-        @clicl.ctrl="listClickedWCtrl"
-        :data-query-id="query._id || query._edit_id"
-        v-bind:class="{ 'active purple white--text': editingQueries.some(e => e === query._id || e === query._edit_id) }"
-      )
-        v-list-tile-content
-          v-list-tile-title.preview-select {{ query.presetName || query._id ? `#${query._id}` : query._edit_id ? $t("new-query") : $t("no-name") }}
-    .empty.py-5.px-3.text-xs-center(v-else-if="this") {{ $t("empty") }}
+      draggable(v-model="queries" :options="{draggable:'.draggable'}" @choose="draggableItemClicked" @sort="dragged")
+        v-list-tile(
+          v-for="(query, i) in queries"
+          :key="query._id || query._edit_id"
+          @click.exact="listClicked"
+          @click.ctrl="listClickedWCtrl"
+          :data-query-id="query._id || query._edit_id"
+          v-bind:class="{ 'active purple white--text': editingQueries.some(e => e === query._id || e === query._edit_id), 'draggable': oneInstanceSelected }"
+        )
+          v-list-tile-content
+            v-list-tile-title.preview-select {{ query.presetName ? query.presetName : query._id ? `#${query._id}` : query._edit_id ? $t("new-query") : $t("no-name") }}
+            v-list-tile-sub-title {{ query.presetName ? ( query.replace ? query.replace.join("/") : '' ) : ( query.text ? query.text.join("/") : "" ) }}
+    .empty.py-5.px-3.text-xs-center(v-else) {{ $t("empty") }}
 </template>
 <script lang="ts">
+import $ from "cafy"
 import Vue from "vue"
+import draggable from 'vuedraggable'
 import { I18n } from "../i18n"
 
 import equal from "deep-equal"
-import { getUniqueStr } from "../../scripts/getUniqueStr";
+import { getUniqueStr } from "../../scripts/getUniqueStr"
+
 
 const i18n = I18n("components/query-list")
 
+const renew = (component: Vue) => {
+  console.log("renew", component.$data.selectedRenderInstances)
+  if (component.$data.selectedRenderInstances === null || component.$data.selectedRenderInstances === undefined || component.$data.selectedRenderInstances.length === 0) {
+    component.$store.commit("set", { key: "queriesShowing", value: [] })
+    component.$data.queries = []
+    return
+  }
+  if (!component.$data.selectedRenderInstances || equal(component.$data.selectedRenderInstances, [null], { strict: true })) {
+    component.$store.commit("set", { key: "queriesShowing", value: component.$store.state.presets })
+    component.$data.queries = component.$store.state.presets
+    return
+  }
+  const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ? [...d, ...flatten(e)] : [...d, e], [])
+  const qs = component.$data.selectedRenderInstances.filter(e => e)
+                   .map(e => e.options.queries)
+  return component.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
+    .then(data => {
+        const queries = data.queries.filter(e => e)
+        component.$store.commit("set", { key: "queriesShowing", value: queries})
+        component.$data.queries = queries
+        return
+      })
+}
+
 export default Vue.extend({
   components: {
+    draggable
   },
   data() {
     return {
+      queries: [],
+      selectedRenderInstances: null,
+      draggable: false
     }
   },
   computed: {
-    selectedRenderInstances() {
-      return this.$store.state.selectedRenderInstances
-    },
-    queries() {
-      if (!this.$store.state.selectedRenderInstances || equal(this.$store.state.selectedRenderInstances, [null])) return this.$store.state.presets
-      return this.$store.state.queriesShowing
+    xselectedRenderInstances() {
+      const si = this.$store.state.selectedRenderInstances.map(
+          e => {
+            if (!e) return null
+            return this.$store.state.renderInstances.find(x => x.renderInstanceId === e)
+          }
+        )
+      this.$data.selectedRenderInstances = si
+      return si
     },
     editingQueries() {
       return this.$store.state.editingQueries
+    },
+    oneInstanceSelected() {
+      const res = (this.$store.state.selectedRenderInstances).length === 1
+      this.$data.draggable = res
+      return res
     }
   },
   mounted() {
+    this.$root.$data.socket.socket.addEventListener("message", ev => {
+      if (!$.str.ok(ev.data)) return
+      const data = JSON.parse(ev.data)
+      if (data.body.type === "queryUpdated") {
+        renew(this)
+      }
+    })
+    this.$store.watch(state => state.presets, () => {
+      renew(this)
+    })
   },
   methods: {
     listClicked(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      this.$store.commit("set", { key: "editingQueries", value: [current.dataset.queryId] })
+      const id = current.dataset.queryId
+      console.log("listClicked", current)
+      const target = this.$data.queries.findIndex(e => e._id === id)
+      if (
+        (target || target === 0) &&
+        current.classList.contains("active") &&
+        this.$data.selectedRenderInstances &&
+        this.$data.selectedRenderInstances.length === 1 &&
+        this.$data.selectedRenderInstances[0]) {
+        this.$root.$data.socket.pass({
+          type: "renderInstanceInfo",
+          body: {
+            type: "showRenderInstanceSubtitle",
+            renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
+            target
+          }
+        })
+        return
+      }
+      this.$store.commit("set", { key: "editingQueries", value: [id] })
     },
     listClickedWCtrl(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      if (this.$store.state.editingQueries.some(e => e._id === current.dataset.queryId)) {
+      if (this.$store.state.editingQueries.some(e => e === current.dataset.queryId)) {
         this.$store.commit("remove", { key: "editingQueries", value: current.dataset.queryId })
       } else {
         this.$store.commit("push", { key: "editingQueries", value: current.dataset.queryId })
@@ -76,6 +146,7 @@ export default Vue.extend({
           class: "",
           stretch: false,
           func: "",
+          style: "",
           anchor: "middle"
         }})
       this.$store.commit("set", { key: "editingQueries", value: [_edit_id] })
@@ -98,29 +169,46 @@ export default Vue.extend({
             this.$store.commit("set", { key: "editingQueries", value: [ data._id ] })
           })
       }
+    },
+    draggableItemClicked(ev: any) {
+      const current = (ev.item as HTMLElement).children.item(0) as HTMLElement
+      const id = current.dataset.queryId
+      console.log("draggableItemClicked", current)
+      const target = this.$data.queries.findIndex(e => e._id === id)
+      if (
+        (target || target === 0) &&
+        current.parentElement.classList.contains("active") &&
+        this.$data.selectedRenderInstances &&
+        this.$data.selectedRenderInstances.length === 1 &&
+        this.$data.selectedRenderInstances[0]) {
+        this.$root.$data.socket.pass({
+          type: "renderInstanceInfo",
+          body: {
+            type: "showRenderInstanceSubtitle",
+            renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
+            target
+          }
+        })
+        return
+      }
+      this.$store.commit("set", { key: "editingQueries", value: [id] })
+    },
+    dragged(ev: any) {
+      if (
+        this.$data.selectedRenderInstances &&
+        this.$data.selectedRenderInstances.length === 1 &&
+        this.$data.selectedRenderInstances[0] !== null) {
+        this.$root.$data.socket.operate("renderInstance/update", {
+          renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
+          options: { queries: this.$data.queries.map(e => e._id) }
+        })
+      }
     }
   },
   watch: {
-    selectedRenderInstances(newVal, oldVal) {
-      if (newVal === null || newVal === undefined || newVal.length === 0) {
-        this.$store.commit("set", { key: "queriesShowing", value: [] })
-        return
-      }
-      if (!newVal || equal(newVal, [null], { strict: true })) {
-        return
-      }
-      const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ?
-                                                [...d, ...flatten(e)] :
-                                                [...d, e ], [])
-      const qs = newVal.filter((e, i, arr) => arr.indexOf(e) === i)
-                       .map(e => this.$store.state.renderInstances.find(x => x.renderInstanceId === e))
-                       .filter(e => e)
-                       .map(e => e.options.queries)
-      /*const qz = this.$store.state.renderInstances.filter(e => newVal.some(x => x === e.renderInstanceId))
-                                                  .map(e => e.options.queries)
-                                                  .filter((e, i, arr) => arr.indexOf(e) === i)*/
-      this.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
-        .then(data => this.$store.commit("set", { key: "queriesShowing", value: data.queries }))
+    xselectedRenderInstances(newVal, oldVal) {
+      if (equal(newVal, oldVal)) return
+      renew(this)
     }
   },
   i18n

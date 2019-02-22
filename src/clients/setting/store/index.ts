@@ -44,7 +44,7 @@ export const Store = (socket: Socket) => {
         // 対象が配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr().ok(target)) return
-        nestedProperty.set(state, x.key, target.filter(e => !equal(e, x.value)))
+        nestedProperty.set(state, x.key, target.filter(e => !equal(e, x.value, { strict: true })))
       },
       // 配列の要素をテストして除外します
       removeByKeyTest(state, x: { key: string; testKey: string; testValue: any }) {

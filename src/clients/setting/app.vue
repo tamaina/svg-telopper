@@ -7,7 +7,7 @@ v-app(dark)#vapp
       v-layout(row wrap).justify-center.h-100
         scene-list
         source-list
-        v-flex(xs2)
+        v-flex(xs3)
           v-layout(column)
             render-instance-setting
             query-list
