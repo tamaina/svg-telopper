@@ -10,9 +10,48 @@ common:
     scenes: Scenes
     sceneCollection: Scene Collection
     sceneCollections: Scene Collections
-  renderInstance: Render Instance
-  renderInstances: Render Instances
+    renderInstance: 描画インスタンス
+    renderInstances: 描画インスタンス群
+  words:
+    preset: プリセット
+    query: クエリ
 app:
-  obs-not-connected:
-components/navbar:
-  not-in-scene:
+  obs-not-connected: OBS未接続
+  disconnected: サーバーに接続しています......
+components/scene-list:
+  all: すべて
+components/query-list:
+  no-name: (名称なし)
+  empty: 特に表示するものはないようです。
+  you-should-have-one-or-more-presets: 描画インスタンスのクエリを作成するには、プリセットが一つ以上登録されている必要があります！
+  new-query: 新しいクエリ
+components/render-instance-setting:
+  reverse: 表示順を逆転
+  show: 表示するクエリ
+  client-width: クライアント幅
+  client-height: クライアント高
+  css-value: CSS値
+  apply: 適用
+components/query-editor:
+  empty: 編集するものはありません。
+  new-query: 新しいクエリ
+  nothing: 何もありません
+  replacer-text: 置き換え対象
+  replacing-text: 文字列
+  save: 保存
+  remove: 削除
+  cancel: 取り消す
+  save-preset: プリセットに登録
+  preset-name: プリセット名
+  timeout: タイムアウト
+  class: クラス
+  stretch: 枠に合わせて変形
+  html: HTML/SVG
+  function: 関数
+  style: スタイルシート
+  push-text: フィールドを追加
+  pop-text: フィールドを削除
+  anchor: アンカー
+  you-should-fill-in-preset-name: プリセット名を記入してください！
+  editor: 編集
+  preset: プリセット
