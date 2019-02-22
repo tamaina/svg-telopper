@@ -5,7 +5,7 @@
   "main": "./built/index.js",
   "scripts": {
     "start": "node built/index.js",
-    "build": "gulp build"
+    "build": "gulp"
   },
   "author": "tamaina",
   "license": "ISC",
