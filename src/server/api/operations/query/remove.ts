@@ -42,18 +42,18 @@ export default async (server: STServer, request: ISocketRequestData) => {
     }
   })
   db.renderInstances.update(
-    { "options.queries": { $exists: true }},
-    { $pull: { "options.queries": { $in: request.body.option.ids }}},
+    { queries: { $exists: true }},
+    { $pull: { queries: { $in: request.body.option.ids }}},
     { multi: true, returnUpdatedDocs: true }
   ).then(instances => {
     console.log(instances)
     if (!instances) return
-    for (const query of instances) {
+    for (const instance of instances) {
       server.broadcastData({
         type: "update",
         body: {
           type: "renderInstanceUpdated",
-          query
+          instance
         }
       })
     }

@@ -5,7 +5,7 @@ import { ISocketData } from "../../models/socketData"
 import { Socket } from "./socket"
 
 export class STW {
-  public options: ISTWOptions
+  public instance: ISTWOptions
   public initialized: boolean = false
   public showing: number
   public renderInstanceId: string
@@ -55,14 +55,14 @@ export class STW {
   }
 
   // initです。「initializeRenderInstance」を受け取ることで起動します。
-  public async init(data, root: HTMLElement) {
-    console.log("called: init", data, root)
+  public async init(body, root: HTMLElement) {
+    console.log("called: init", body, root)
     if (this.initialized) return
     this.initialized = true
     this.presets = await this.socket.operate("query/list", {
       isPreset: true
     }).then(res => res.queries)
-    this.options = data.options
+    this.instance = body.instance
     try {
       this.root = root
       this.root.style.display = "flex"
@@ -73,12 +73,12 @@ export class STW {
       throw new Error("不適切な要素が指定されました。")
     }
     this.client = this.root.getElementsByClassName("client").item(0) as HTMLElement
-    this.client.style.width = data.options.clientWidth || "80%"
-    this.client.style.height = data.options.clientHeght || "80%"
-    if (data.options.queries && data.options.queries.length > 0) {
-      this.insertSubtitles(data.options.queries)
+    this.client.style.width = body.instance.clientWidth || "80%"
+    this.client.style.height = body.instance.clientHeght || "80%"
+    if (body.instance.queries && body.instance.queries.length > 0) {
+      this.insertSubtitles(body.instance.queries)
         .then(() => {
-          const showingIndex = Number(data.options.showingIndex) || 0
+          const showingIndex = Number(body.instance.showingIndex) || 0
           this.show(showingIndex)
         })
     }
@@ -99,26 +99,26 @@ export class STW {
     console.log("called: updateRInfo", data)
     if (this.updating) return
     this.updating = true
-    const nextOption = data.query.options
-    if (equal(this.options, nextOption, { strict: true })) return
+    const nextInstance = data.instance
+    if (equal(this.instance, nextInstance, { strict: true })) return
 
     let renewAllSubtitles = false
-    if (nextOption.clientWidth !== this.options.clientWidth) {
+    if (nextInstance.clientWidth !== this.instance.clientWidth) {
       renewAllSubtitles = true
-      this.client.style.width = nextOption.clientWidth
+      this.client.style.width = nextInstance.clientWidth
     }
-    if (nextOption.clientHeight !== this.options.clientHeight) {
+    if (nextInstance.clientHeight !== this.instance.clientHeight) {
       renewAllSubtitles = true
-      this.client.style.height = nextOption.clientHeight
+      this.client.style.height = nextInstance.clientHeight
     }
-    this.showing = nextOption.showingIndex
+    this.showing = nextInstance.showingIndex
 
     let passed = 0
-    if (renewAllSubtitles) this.renewAllSubtitles(nextOption.queries)
+    if (renewAllSubtitles) this.renewAllSubtitles(nextInstance.queries)
     else {
       const elementsPool = [].concat(this.subtitles) as HTMLElement[]
-      for (let i = 0; i < nextOption.queries.length; i += 1) {
-        const query = nextOption.queries[i]
+      for (let i = 0; i < nextInstance.queries.length; i += 1) {
+        const query = nextInstance.queries[i]
         const oldElem = this.client.children.item(i - passed) as HTMLElement
         if (oldElem ? oldElem.dataset.id === query : false) continue
 
@@ -147,8 +147,8 @@ export class STW {
           }
         }
       }
-      if ((this.client.children.length || 0) > nextOption.queries.length - passed) {
-        for (let i = nextOption.queries.length - passed; i < this.client.children.length; i += 1) {
+      if ((this.client.children.length || 0) > nextInstance.queries.length - passed) {
+        for (let i = nextInstance.queries.length - passed; i < this.client.children.length; i += 1) {
           this.client.removeChild(this.client.children.item(i))
         }
       }
@@ -157,7 +157,7 @@ export class STW {
 
     this.show(this.showing)
 
-    this.options = nextOption
+    this.instance = nextInstance
     this.updating = false
   }
 
@@ -331,7 +331,7 @@ export class STW {
           item.classList.remove("hide")
           item.classList.add("show")
         }
-        subtitle.style.zIndex = String(1 * (this.options.reverse ? -1 : 1))
+        subtitle.style.zIndex = String(1 * (this.instance.reverse ? -1 : 1))
         const timeout = Number(subtitle.dataset.timeout)
         if (timeout && timeout > 0 && !this.setTimeout) {
           this.setTimeout = setTimeout(this.show.bind(this, i + 1), timeout) as any as number
@@ -343,7 +343,7 @@ export class STW {
           item.classList.add("hide")
           item.classList.remove("show")
         }
-        subtitle.style.zIndex = String(1 * (this.options.reverse ? 1 : -1))
+        subtitle.style.zIndex = String(1 * (this.instance.reverse ? 1 : -1))
       }
     }
 

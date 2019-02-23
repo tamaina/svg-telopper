@@ -1,6 +1,6 @@
 <template lang="pug">
 v-flex(xs2).source-list.h-100
-  v-card.column
+  v-card.st-column
     v-toolbar
       v-toolbar-title {{ $t("@.obs.source") }}
     v-list

@@ -42,7 +42,7 @@ export default async (server: STServer, request: ISocketRequestData) => {
     return { type: "success", success: "ng" }
   }
 
-  const trueScenes = request.body.option.sceneNames.filter(e => e && server.obsInfo.scenes.some(e))
+  const trueScenes = request.body.option.sceneNames.filter(e => e && server.obsInfo.scenes.some(x => x === e))
 
   if (request.body.option.sceneNames.length - trueScenes > 1) server.message("不明なシーンが見つかりました。", "warn")
 

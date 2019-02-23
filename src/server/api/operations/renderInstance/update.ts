@@ -17,7 +17,7 @@ export const meta = {
         "ja-JP": "renderInstanceId"
       }
     },
-    options: {
+    instance: {
       validator: $.obj(),
       description: {
         "ja-JP": "ISTWOptions"
@@ -38,8 +38,9 @@ export const meta = {
 } as IEndpointInfo
 
 export default async (server: STServer, request: ISocketRequestData) => {
+  const renderInstanceId = request.body.option.instance.renderInstanceId || request.body.option.renderInstanceId
   const b = await db.renderInstances.findOne(
-    { renderInstanceId: request.body.option.renderInstanceId }
+    { renderInstanceId }
   )
   if (!b) {
     server.message("指定された描画インスタンスは見つかりませんでした。", "error")
@@ -48,9 +49,9 @@ export default async (server: STServer, request: ISocketRequestData) => {
     type: "update",
     body: {
       type: "renderInstanceUpdated",
-      query: await db.renderInstances.update(
-        { renderInstanceId: request.body.option.renderInstanceId },
-        { $set: { options: extend(true, {}, b.options, request.body.option.options) } },
+      instance: await db.renderInstances.update(
+        { renderInstanceId },
+        extend(true, {}, b, request.body.option.instance),
         { returnUpdatedDocs: true }
       )
     }

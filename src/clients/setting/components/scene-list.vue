@@ -1,6 +1,6 @@
 <template lang="pug">
 v-flex(xs2 v-if="obsConnected").scene-list.h-100
-  v-card.column
+  v-card.st-column
     v-toolbar
       v-toolbar-title {{ $t("@.obs.scene") }}
     v-list

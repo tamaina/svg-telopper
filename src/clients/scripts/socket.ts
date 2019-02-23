@@ -1,7 +1,7 @@
 import $ from "cafy"
 import ReconnectingWebSocket from "reconnecting-websocket"
+import { getUniqueStr } from "../../getUniqueStr"
 import { ISocketData, ISocketResponseData } from "../../models/socketData"
-import { getUniqueStr } from "./getUniqueStr"
 
 export class Socket {
   public socket: ReconnectingWebSocket

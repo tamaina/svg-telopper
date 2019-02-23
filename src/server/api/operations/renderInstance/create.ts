@@ -1,6 +1,7 @@
 import $ from "cafy"
 
 import { STServer } from "../../.."
+import { getUniqueStr } from "../../../../getUniqueStr"
 import { ISocketRequestData } from "../../../../models/socketData"
 import db from "../../../db"
 import { IEndpointInfo } from "../../operations"
@@ -38,14 +39,20 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   const inserted = await db.renderInstances.insert(
-    request.body.option.query
+    Object.assign({
+      renderInstanceId: getUniqueStr(),
+      queries: [],
+      reverse: false,
+      showingIndex: 0,
+      connectionCount: 1
+    }, request.body.option.instance)
   )
 
   server.broadcastData({
     type: "update",
     body: {
       type: "renderInstanceCreated",
-      query: inserted
+      instance: inserted
     }
   })
 

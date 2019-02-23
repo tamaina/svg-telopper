@@ -1,33 +1,41 @@
-import * as colors from "colors"
+import { deepStrictEqual } from "assert"
+import * as retry from "async-retry"
 import * as log from "fancy-log"
 import * as OBSWebSocket from "obs-websocket-js"
+
 import { STServer } from "."
 import { config } from "../config"
+import { IObsInfo } from "../models/obs"
 import { ISocketBroadData } from "../models/socketData"
 import db from "./db"
 
-export const obsSocket = (server: STServer) => {
+function equal(a: any, b: any) {
+  try {
+    deepStrictEqual(a, b)
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+export const obsSocket = async (server: STServer) => {
+  let reconnecting = false
   const obs = new OBSWebSocket()
   log("OBSのWebSocketに接続します...")
   log(config.obs)
 
   const reconnect = (info: string) => {
-    log(colors.red(info))
-    obs.disconnect()
-    db.obsSources.remove({}, { multi: true })
-    if (server.obs) {
-      setTimeout(obsSocket, 20000)
-      const i = server.obs
-      server.obs = null
-      server.obsInfo = {
-        connected: false,
-        scName: null,
-        scenes: [],
-        currentScene: null,
-        scenePreviewing: null,
-        studioMode: false
-      }
+    if (reconnecting) return
+    reconnecting = true
+    server.obsInfo = {
+      connected: false,
+      scName: null,
+      scenes: [],
+      currentScene: null,
+      scenePreviewing: null,
+      studioMode: false
     }
+    throw new Error("OBSに接続できませんでした。")
   }
 
   const broadcastData = (type: string, data: { [key: string]: any }) => {
@@ -41,30 +49,44 @@ export const obsSocket = (server: STServer) => {
   }
 
   const updateObs = async () => {
-    db.renewObs()
-
+    try {
     const [ { scName }, sceneList, sourcesList, { studioMode } ] = await Promise.all([
       obs.send("GetCurrentSceneCollection"),
       obs.send("GetSceneList"),
       obs.send("GetSourcesList"),
       obs.send("GetStudioModeStatus")
     ])
-    const scenes = sceneList.scenes.map(e => e.name)
+    const sceneNames = sceneList.scenes.map(e => e.name)
 
-    await db.obsSources.insert((sourcesList.sources as any[]).map(e => {
-      return {
-        scenes: [],
-        groups: [],
-        children: [],
-        name: e.name,
-        type: e.typeId
-      }
-    }))
+    await db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } })
 
-    const updates = []
+    const renewSourcesPromises = [] as Array<Promise<any>>
+    for (const source of sourcesList.sources as any[]) {
+      renewSourcesPromises.push(db.obsSources.update(
+        { name: source.name },
+        {
+          scenes: [],
+          groups: [],
+          children: [],
+          name: source.name,
+          type: source.typeId
+        },
+        { upsert: true }
+      ))
+    }
+    renewSourcesPromises.push(
+      db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } })
+    )
+
+    await Promise.all(renewSourcesPromises)
+
+    const updates = [] as Array<Promise<any>>
+
     for (const scene of sceneList.scenes) {
-      db.obsScenes.insert(
-        { name: scene.name, items: scene.sources.map(e => e.name) }
+      db.obsScenes.update(
+        { name: scene.name },
+        { name: scene.name, items: scene.sources.map(e => e.name) },
+        { upsert: true }
       )
       for (const source of scene.sources) {
         updates.push(db.obsSources.update(
@@ -95,20 +117,26 @@ export const obsSocket = (server: STServer) => {
 
     const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList.currentScene
 
-    server.obsInfo = {
+    const oldInfo = server.obsInfo ? Object.assign({}, server.obsInfo) : null
+    const newInfo = {
       connected: true,
       scName,
-      scenes,
+      scenes: sceneNames,
       currentScene: sceneList.currentScene,
       scenePreviewing,
       studioMode
+    } as IObsInfo
+    if (equal(oldInfo, newInfo)) {
+      server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo: server.obsInfo }})
+      server.obsInfo = newInfo
     }
-    server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo: server.obsInfo }})
-
     await Promise.all(updates)
 
 // tslint:disable-next-line: max-line-length
     if (process.env.NODE_ENV === "development") log(`ObsInfo: シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
+    } catch (e) {
+    reconnect("OBSの情報を取得する際、問題が発生しました。")
+    }
   }
 
   const doUpdateObs = () => {
@@ -147,35 +175,32 @@ export const obsSocket = (server: STServer) => {
     reconnect("OBSのWebSocketが切断されました。")
   })
 
-  const onError = err => { // Promise convention dicates you have a catch on every chain.
-    log(err)
-    reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
-  }
-
-  obs.connect(config.obs)
+  await obs.connect(config.obs)
     .then(() => {
       log("OBSのWebsocketへの接続に成功しました。")
       server.obs = obs
-    }, onError)
-    .then(async () => {
-      return await updateObs()
-    }, onError)
-    .then(async () => {
-      setInterval(doUpdateObs, 1000)
+    })
+    .catch(() => {
+      reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
+    })
 
-      obs.send("SetHeartbeat", { enable: true }, err => {
-        if (err) {
-          log(err)
+  updateObs()
+
+  setInterval(doUpdateObs, 5000)
+
+  obs.send("SetHeartbeat", { enable: true }, err => {
+    if (err) {
+      log(err)
+    }
+    let last = new Date()
+    obs.on("Heartbeat", () => {
+      last = new Date()
+      setTimeout(() => {
+        if ((new Date()).getTime() - last.getTime() > 4000) {
+          reconnect("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
+          throw Error()
         }
-        let last = new Date()
-        obs.on("Heartbeat", () => {
-          last = new Date()
-          setTimeout(() => {
-            if ((new Date()).getTime() - last.getTime() > 4000) {
-              reconnect("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
-            }
-          }, 5000)
-        })
-      })
-    }, onError)
+      }, 5000)
+    })
+  })
 }

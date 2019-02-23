@@ -1,6 +1,6 @@
 <template lang="pug">
-v-flex(grow).query-list
-  v-card.column
+v-flex(grow shrink).query-list.overflow-auto.h-100.pb-0
+  v-card.st-column
     v-toolbar
       v-toolbar-title {{ $t("@.words.query") }}
       v-spacer
@@ -28,7 +28,7 @@ import draggable from 'vuedraggable'
 import { I18n } from "../i18n"
 
 import equal from "deep-equal"
-import { getUniqueStr } from "../../scripts/getUniqueStr"
+import { getUniqueStr } from "../../../getUniqueStr"
 
 
 const i18n = I18n("components/query-list")
@@ -47,7 +47,7 @@ const renew = (component: Vue) => {
   }
   const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ? [...d, ...flatten(e)] : [...d, e], [])
   const qs = component.$data.selectedRenderInstances.filter(e => e)
-                   .map(e => e.options.queries)
+                   .map(e => e.queries)
   return component.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
     .then(data => {
         const queries = data.queries.filter(e => e)
@@ -162,7 +162,7 @@ export default Vue.extend({
               const renderInstance = this.$store.state.renderInstances.find(e => e.renderInstanceId === id)
               this.$root.$data.socket.operate("renderInstance/update", {
                 renderInstanceId: id,
-                options: { queries: renderInstance.options.queries.concat([data._id]) }
+                instance: { queries: renderInstance.queries.concat([data._id]) }
               })
             }
             this.$store.commit("push", { key: "queriesShowing", value: { _id: data._id, presetId }})
@@ -200,7 +200,7 @@ export default Vue.extend({
         this.$data.selectedRenderInstances[0] !== null) {
         this.$root.$data.socket.operate("renderInstance/update", {
           renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
-          options: { queries: this.$data.queries.map(e => e._id) }
+          instance: { queries: this.$data.queries.map(e => e._id) }
         })
       }
     }

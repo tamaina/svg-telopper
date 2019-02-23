@@ -10,10 +10,10 @@ export const meta = {
     "ja-JP": "プリセットをアップデートします。"
   },
   params: {
-    renderInstanceId: {
-      validator: $.str,
+    ids: {
+      validator: $.arr($.str),
       description: {
-        "ja-JP": "renderInstanceId"
+        "ja-JP": "renderInstanceIdの配列"
       }
     }
   },
@@ -32,18 +32,18 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   if (await db.renderInstances.findOne(
-    {renderInstanceId: request.body.option.renderInstanceId }).connectionCount > 0) {
+    { renderInstanceId: request.body.option.renderInstanceId }).connectionCount > 0) {
     return { type: "success", success: "ng" }
   }
 
   db.renderInstances.remove(
-    { renderInstanceId: request.body.option.renderInstanceId }
+    { renderInstanceId: { $in: request.body.option.ids }}
   )
   server.broadcastData({
     type: "update",
     body: {
       type: "renderInstanceRemoved",
-      renderInstanceId: request.body.option.renderInstanceId
+      ids: request.body.option.ids
     }
   })
 

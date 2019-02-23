@@ -8,27 +8,26 @@ class Db {
   public obsScenes: Nedb
 
   constructor() {
-    this.queries = new Nedb({
+    this.queries = Nedb.create({
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/queries.nedb`
     })
-    this.renderInstances = new Nedb({
+    this.renderInstances = Nedb.create({
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/renderInstances.nedb`
     })
-    this.obsSources = new Nedb(process.env.NODE_ENV === "production" ? {} : {
+    this.obsSources = Nedb.create(process.env.NODE_ENV === "production" ? {} : {
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/obsSources.nedb`
     })
-    this.obsScenes = new Nedb(process.env.NODE_ENV === "production" ? {} : {
+    this.obsScenes = Nedb.create(process.env.NODE_ENV === "production" ? {} : {
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/obsScenes.nedb`
     })
-  }
-
-  public async renewObs() {
-    await this.obsSources.remove({}, { multi: true })
-    await this.obsScenes.remove({}, { multi: true })
+    this.queries.persistence.setAutocompactionInterval(20000)
+    this.renderInstances.persistence.setAutocompactionInterval(20000)
+    this.obsSources.persistence.setAutocompactionInterval(20000)
+    this.obsScenes.persistence.setAutocompactionInterval(20000)
   }
 }
 

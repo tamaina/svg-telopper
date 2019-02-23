@@ -113,17 +113,19 @@ export const Store = (socket: Socket) => {
       store.commit("updateByKeyTest",
         {
           key: "renderInstances",
-          value: data.body.query,
+          value: data.body.instance,
           testKey: "renderInstanceId",
-          testValue: data.body.query.renderInstanceId })
+          testValue: data.body.instance.renderInstanceId })
       break
     case "renderInstanceRemoved":
-      store.commit("removeByKeyTest",
-        {
-          key: "renderInstances",
-          testKey: "renderInstanceId",
-          testValue: data.body.renderInstanceId
-        })
+      for (const id of data.body.ids) {
+        store.commit("removeByKeyTest",
+          {
+            key: "renderInstances",
+            testKey: "renderInstanceId",
+            testValue: id
+          })
+        }
       break
     case "queryCreated":
       if (data.body.query.presetName) {
@@ -151,7 +153,7 @@ export const Store = (socket: Socket) => {
       const value = store.state.renderInstances.map(e => {
         if (e.renderInstanceId !== data.body.renderInstanceId) return e
         const newv = Object.assign({}, e)
-        newv.options.showingIndex = data.body.target
+        newv.showingIndex = data.body.target
         return newv
       })
       store.commit("set", { key: "renderInstances", value })

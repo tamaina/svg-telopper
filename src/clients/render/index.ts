@@ -1,4 +1,4 @@
-import { getUniqueStr } from "../scripts/getUniqueStr"
+import { getUniqueStr } from "../../getUniqueStr"
 import onReady from "../scripts/onReady"
 import { Socket } from "../scripts/socket"
 import { STW } from "../scripts/stw"

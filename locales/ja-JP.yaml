@@ -32,6 +32,7 @@ components/render-instance-setting:
   client-height: クライアント高
   css-value: CSS値
   apply: 適用
+  remove: 削除
 components/query-editor:
   empty: 編集するものはありません。
   new-query: 新しいクエリ
@@ -41,6 +42,7 @@ components/query-editor:
   save: 保存
   remove: 削除
   cancel: 取り消す
+  add-to-render-instance: 描画インスタンスに追加
   save-preset: プリセットに登録
   preset-name: プリセット名
   timeout: タイムアウト

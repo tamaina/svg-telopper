@@ -1,6 +1,6 @@
 <template lang="pug">
 v-flex(xs5).query-editor.h-100
-  v-card(v-if="editing && editing.length > 0").edit.column
+  v-card(v-if="editing && editing.length > 0").edit.st-column
     v-toolbar
       v-toolbar-title {{ presetName ? `${presetName}${ids ? ` (#${ids.join(', #')})` : ''}` : `#${ids && ids.join(', #')}` || $t("new-query") }}
     v-form
@@ -77,7 +77,7 @@ v-flex(xs5).query-editor.h-100
                 v-select(
                   :items="['end', 'middle', 'start']"
                   v-model="anchor"
-                  :label="$t('align')"
+                  :label="$t('anchor')"
                   outline
                   :hide-details="true"
                 )
@@ -127,6 +127,22 @@ v-flex(xs5).query-editor.h-100
                 )
                   font-awesome-icon(icon="trash" fixed-width)
                   | {{ $t("remove") }}
+              v-flex(v-if="!editId").pa-1
+                v-menu(offset-y)
+                  v-btn(
+                    block
+                    color="primary"
+                    slot="activator"
+                  )
+                    font-awesome-icon(icon="copy" fixed-width)
+                    | {{ $t("add-to-render-instance") }}
+                  v-list
+                    v-list-tile(
+                      v-for="instance of $store.state.renderInstances"
+                      :key="instance.renderInstanceId"
+                      @click="addToInstance(instance)"
+                    )
+                      v-list-tile-title {{ instance.renderInstanceId }}
               v-flex(v-if="editId").pa-1
                 v-btn(
                   block
@@ -149,7 +165,7 @@ v-flex(xs5).query-editor.h-100
               @click="savePreset"
             ).ma-1 {{ $t("save-preset") }}
 
-  v-card(v-else).column
+  v-card(v-else).st-column
     v-toolbar
       v-toolbar-title {{ $t("nothing") }}
     .empty.py-5.px-3.text-xs-center {{ $t("empty") }}
@@ -162,6 +178,7 @@ import { I18n } from "../i18n"
 import MonacoEditor from "vue-monaco"
 
 import equal from "deep-equal"
+import { getUniqueStr } from "../../../getUniqueStr"
 
 const i18n = I18n("components/query-editor")
 
@@ -451,6 +468,55 @@ export default Vue.extend({
     remove() {
       this.$root.$data.socket.operate("query/remove", { ids: this.$data.ids })
       this.$store.commit("set", { key: "editingQueries", value: [] })
+    },
+    addToInstance(instance) {
+      const query = {} as { [key: string]: any }
+      const targetKeys = [
+        "replace",
+        "text",
+        "innerHtml",
+        "timeout",
+        "class",
+        "stretch",
+        "func",
+        "style",
+        "anchor"
+      ]
+      query.class = this.$data.class
+      for (const key of targetKeys) {
+        switch (key) {
+        case "class":
+          if (
+            this.$data.classStr !== null && (
+              !this.$data.presetName ?
+              (this.$data.classStr !== this.preset.class) :
+              true )
+          ) query.class = this.$data.classStr
+          break
+        default:
+          if (
+            this.$data[key] !== null && (
+              !this.$data.presetName ?
+              !equal(this.$data[key], this.preset[key], { strict: true }) :
+              true )
+          ) query[key] = this.$data[key]
+        }
+      }
+      if (this.$data.presetName) query.presetId = this.$data.ids[0]
+      const vdata = this.$data
+      this.$root.$data.socket.operate("query/create", {
+        query
+      })
+        .then(data => {
+          if (data.type !== "success") return
+          this.$root.$data.socket.operate("renderInstance/update", {
+            instance: {
+              renderInstanceId: instance.renderInstanceId,
+              queries: instance.queries.concat([data._id])
+            }
+          })
+          this.$store.commit("set", { key: "editingQueries", value: [data._id] })
+        })
     }
   },
   watch: {

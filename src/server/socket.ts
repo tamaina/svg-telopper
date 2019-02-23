@@ -26,19 +26,13 @@ const onRenderInstanceConnected = async (
       { upsert: true, returnUpdatedDocs: true }
     )
   } else {
-    const onePreset = await db.queries.findOne({})
-    if (!onePreset) {
-      server.message("まずはプリセットを登録しましょう！", "warn")
-      return
-    }
-    const newQuery = await db.queries.insert({ presetId: onePreset._id })
+    const findOnePreset = await db.queries.findOne({})
+    const queries = findOnePreset ? [(await db.queries.insert({ presetId: findOnePreset._id }))._id] : []
     const instance = {
       renderInstanceId,
-      options: {
-        queries: [newQuery._id],
-        reverse: false,
-        showingIndex: 0
-      },
+      queries,
+      reverse: false,
+      showingIndex: 0,
       connectionCount: 1
     }
     res.body = instance
@@ -57,7 +51,16 @@ const onRenderInstanceConnected = async (
 
   const renderInstanceDied = () => {
     log(`描画インスタンスは切断されました: #${renderInstanceId}`)
-    db.renderInstances.update({ renderInstanceId }, { $inc: { connectionCount: -1 } }, { upsert: true })
+    db.renderInstances.update({ renderInstanceId }, { $inc: { connectionCount: -1 } }, { returnUpdatedDocs: true })
+      .then(instance => {
+        server.broadcastData({
+          type: "update",
+          body: {
+            type: "renderInstanceUpdated",
+            instance
+          }
+        })
+      })
     server.ws.broadcast(JSON.stringify({
       body: {
         type: "renderInstanceDisconnected"
@@ -112,7 +115,7 @@ export const socket = (server: STServer) => {
             db.renderInstances.update({
               renderInstanceId: data.body.renderInstanceId
             }, {
-              $set: { "options.showingIndex": data.body.target }
+              $set: { showingIndex: data.body.target }
             })
           default:
             server.ws.broadcast(rdata.utf8Data)

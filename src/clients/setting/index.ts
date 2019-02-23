@@ -28,6 +28,7 @@ Vue.component("font-awesome-icon", FontAwesomeIcon)
 
 import {
   faCheck,
+  faCopy,
   faMinus,
   faPen,
   faPlus,
@@ -38,6 +39,7 @@ import {
 
 library.add(
   faCheck,
+  faCopy,
   faMinus,
   faPen,
   faPlus,
