@@ -1,1 +1,1 @@
-node built/index.js
+npm start 2> log.txt
