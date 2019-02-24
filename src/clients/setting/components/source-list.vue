@@ -71,7 +71,7 @@ export default Vue.extend({
           andOr: this.$store.state.sceneMultipleAndOr
         })
         .then(res => {
-          if (res.type === "sourceSettings") this.$data.sourceList = res.sourceTree
+          if (res.type === "sourceSettings") this.$data.sourceList = res.sourcesTree
         })
     }
   },

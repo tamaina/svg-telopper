@@ -21,7 +21,7 @@ html {
   left: 0;
 }
 
-svg { /* svgの大きさ */
+.wrapper > * { /* 直後の子要素の設定 */
   height: 100%; /* クライアントと同じ(100%) */
   width: 100%; /* クライアントと同じ(100%) */
   transform-origin: left top; /* 変形の基準位置 */
@@ -29,41 +29,10 @@ svg { /* svgの大きさ */
   opacity: 0;
 }
 
-/*    アニメーション(表示)    */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 10%, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-svg.show {
-  animation-duration: 1s;
-  animation-name: fadeInUp;
+.show { /* show */
   opacity: 1;
 }
 
-/*    アニメーション(消滅)   */
-
-@keyframes fadeOutUp {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-    transform: translate3d(0, -10%, 42px);
-  }
-}
-
-svg.hide {
-  animation-duration: 1s;
-  animation-name: fadeOutUp;
+.hide { /* hide */
   opacity: 0;
 }

@@ -21,7 +21,7 @@ export default (socket: Socket) => { return {
       state.scName = res ? res.scName : false
       state.scenes = res ? res.scenes : []
       state.currentScene = res ? res.currentScene : null
-      if (state.scenePreviewing) state.scenePreviewing =  res ? res.scenePreviewing : null
+      if (state.studioMode) state.scenePreviewing = res ? res.scenePreviewing : null
       state.studioMode = res ? res.studioMode : false
     },
     changeScene(state, val: string[]) {
@@ -31,7 +31,7 @@ export default (socket: Socket) => { return {
         socket.sendToObs("SetCurrentScene", { "scene-name": val[1] })
         break
       case "previewing":
-        if (!state.scenePreviewing) return
+        if (!state.studioMode) return
         state.scenePreviewing = val[1]
         socket.sendToObs("SetPreviewScene", { "scene-name": val[1] })
         break

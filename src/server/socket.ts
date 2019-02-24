@@ -17,25 +17,25 @@ const onRenderInstanceConnected = async (
   const { renderInstanceId } = data.body
   log(`新しい描画インスタンスが接続されました: #${renderInstanceId}`)
 
-  const res = {} as any
+  const res = { type: "renderInstanceInfo", body: { type: "initializeRenderInstance" } } as any
 
   if (await db.renderInstances.findOne({ renderInstanceId })) {
-    res.body = await db.renderInstances.update(
+    res.body.instance = await db.renderInstances.update(
       { renderInstanceId },
       { $inc: { connectionCount: 1 } },
       { upsert: true, returnUpdatedDocs: true }
     )
   } else {
-    const findOnePreset = await db.queries.findOne({})
+    const findOnePreset = await db.queries.findOne({ presetName: { $exists: true } })
     const queries = findOnePreset ? [(await db.queries.insert({ presetId: findOnePreset._id }))._id] : []
     const instance = {
       renderInstanceId,
       queries,
       reverse: false,
-      showingIndex: 0,
+      showingQueryId: findOnePreset ? queries[0] : null,
       connectionCount: 1
     }
-    res.body = instance
+    res.body.instance = instance
     await db.renderInstances.insert(instance)
     server.ws.broadcast(JSON.stringify({
       type: "response",
@@ -45,8 +45,6 @@ const onRenderInstanceConnected = async (
       }
     }))
   }
-  res.type = "renderInstanceInfo"
-  res.body.type = "initializeRenderInstance"
   server.ws.broadcast(JSON.stringify(res))
 
   const renderInstanceDied = () => {
@@ -83,8 +81,6 @@ export const socket = (server: STServer) => {
     log(`WebSocket接続が開始されました。`)
 
     connection.on("message", rdata => {
-      console.log(rdata)
-
       connection.on("close", () => {
         log(`WebSocket接続が切断されました。`)
       })
@@ -115,7 +111,7 @@ export const socket = (server: STServer) => {
             db.renderInstances.update({
               renderInstanceId: data.body.renderInstanceId
             }, {
-              $set: { showingIndex: data.body.target }
+              $set: { showingQueryId: data.body.targetId }
             })
           default:
             server.ws.broadcast(rdata.utf8Data)

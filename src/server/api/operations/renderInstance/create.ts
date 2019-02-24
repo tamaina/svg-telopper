@@ -43,7 +43,7 @@ export default async (server: STServer, request: ISocketRequestData) => {
       renderInstanceId: getUniqueStr(),
       queries: [],
       reverse: false,
-      showingIndex: 0,
+      showingQueryId: null,
       connectionCount: 1
     }, request.body.option.instance)
   )

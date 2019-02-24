@@ -3,7 +3,7 @@ export interface ISTWOptions {
   reverse?: boolean
   clientWidth: string
   clientHeight: string
-  showingIndex: number
+  showingQueryId: string
 }
 export interface IQuery {
   presetId?: string

@@ -117,7 +117,7 @@ export const obsSocket = async (server: STServer) => {
 
     const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList.currentScene
 
-    const oldInfo = server.obsInfo ? Object.assign({}, server.obsInfo) : null
+    const oldInfo = server.obsInfo
     const newInfo = {
       connected: true,
       scName,
@@ -126,14 +126,13 @@ export const obsSocket = async (server: STServer) => {
       scenePreviewing,
       studioMode
     } as IObsInfo
-    if (equal(oldInfo, newInfo)) {
-      server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo: server.obsInfo }})
+    if (!equal(oldInfo, newInfo)) {
+      server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo: newInfo }})
       server.obsInfo = newInfo
     }
     await Promise.all(updates)
-
 // tslint:disable-next-line: max-line-length
-    if (process.env.NODE_ENV === "development") log(`ObsInfo: シーンコレクション:${server.obsInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
+    if (process.env.NODE_ENV === "development") log(`ObsInfo: シーンコレクション:${newInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
     } catch (e) {
     reconnect("OBSの情報を取得する際、問題が発生しました。")
     }

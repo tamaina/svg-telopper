@@ -7,7 +7,7 @@ import { Socket } from "./socket"
 export class STW {
   public instance: ISTWOptions
   public initialized: boolean = false
-  public showing: number
+  public showing: string
   public renderInstanceId: string
   private client: HTMLElement
   private subtitles: HTMLElement[] = []
@@ -19,23 +19,18 @@ export class STW {
 
   // コンストラクタは、socketの送受信を設定します。
   constructor(root: HTMLElement = document.body, renderInstanceId: string, socket: Socket) {
-    console.log("called: constructor")
     this.renderInstanceId = renderInstanceId
     this.socket = socket
 
     socket.socket.addEventListener("message", ev => {
       if (!$.str.ok(ev.data)) return
       const data = JSON.parse(ev.data) as ISocketData
+      const riid = data.body.instance ?
+                    (data.body.instance.renderInstanceId || data.body.renderInstanceId) : data.body.renderInstanceId
       if (
         // data.bodyがない もしくは
         !data.body ||
-        /*
-          "「body.renderInstanceIdが存在しない」または
-          「idが存在し、自分のrenderInstanceIdとマッチする」" にあてはまらない
-                  つまり
-          「body.renderInstanceIdが存在する」かつ「idが存在し、自分のrenderInstanceIdとマッチしない」
-        */
-        !$.optional.nullable.str.match(new RegExp(renderInstanceId)).ok(data.body.renderInstanceId)
+        !$.optionalNullable.str.match(new RegExp(renderInstanceId)).ok(riid)
       ) return
       switch (data.body.type) {
         case "initializeRenderInstance":
@@ -45,7 +40,7 @@ export class STW {
           this.updateRInfo(data.body)
           break
         case "showRenderInstanceSubtitle":
-          this.show(Number(data.body.target))
+          this.show(data.body.targetId)
           break
         case "queryUpdated":
           this.updateQuery(data.body.query)
@@ -56,12 +51,19 @@ export class STW {
 
   // initです。「initializeRenderInstance」を受け取ることで起動します。
   public async init(body, root: HTMLElement) {
-    console.log("called: init", body, root)
     if (this.initialized) return
     this.initialized = true
     this.presets = await this.socket.operate("query/list", {
       isPreset: true
     }).then(res => res.queries)
+
+    for (const preset of this.presets) {
+      const style = document.createElement("style")
+      style.id = `stw_style_${preset._id}`
+      style.textContent = preset.style
+      document.head.appendChild(style)
+    }
+
     this.instance = body.instance
     try {
       this.root = root
@@ -78,25 +80,23 @@ export class STW {
     if (body.instance.queries && body.instance.queries.length > 0) {
       this.insertSubtitles(body.instance.queries)
         .then(() => {
-          const showingIndex = Number(body.instance.showingIndex) || 0
-          this.show(showingIndex)
+          const showingQueryId = body.instance.showingQueryId
+          this.show(showingQueryId)
         })
     }
   }
 
   public renewAllSubtitles(queries: string[]) {
-    console.log("called: renewAllSubtitles")
     this.client.innerHTML = ""
     this.subtitles = []
     this.insertSubtitles(queries)
     .then(() => {
-      const showingIndex = Number(this.showing) || 0
-      this.show(showingIndex)
+      const showingQueryId = this.showing
+      this.show(showingQueryId)
     })
   }
 
   public async updateRInfo(data) {
-    console.log("called: updateRInfo", data)
     if (this.updating) return
     this.updating = true
     const nextInstance = data.instance
@@ -111,7 +111,7 @@ export class STW {
       renewAllSubtitles = true
       this.client.style.height = nextInstance.clientHeight
     }
-    this.showing = nextInstance.showingIndex
+    this.showing = nextInstance.showingQueryId
 
     let passed = 0
     if (renewAllSubtitles) this.renewAllSubtitles(nextInstance.queries)
@@ -162,7 +162,6 @@ export class STW {
   }
 
   public updateQuery(query: IQuery) {
-    console.log("called: updateQuery", query)
     if (this.updating) return
     this.updating = true
     this.presets = this.presets.map(e => e._id === query._id ? query as IPresetQuery : e)
@@ -171,17 +170,13 @@ export class STW {
         if (e.dataset.presetId === query._id) return { q: 1, e, id: e.dataset.id }
         return null
       })
-    console.log(updateTargets)
     for (let i = 0; i < updateTargets.length; i += 1) {
       const target = updateTargets[i]
       if (!target) continue
       if (target.q === 0) {
         this.insertSubtitle(query as IRenderInstanceQuery, i)
-        this.client.removeChild(target.e)
-        this.subtitles.splice(i + 1, 1)
         continue
-      }
-      if (target.q === 1) {
+      } else if (target.q === 1) {
         this.presets = this.presets.map(e => {
           if (e._id !== query._id) return e
           return query as IPresetQuery
@@ -193,14 +188,17 @@ export class STW {
           this.insertSubtitle(queryList.queries[0], i)
         })
       }
+      this.client.removeChild(target.e)
+      this.subtitles.splice(i + 1, 1)
     }
+    const style = document.getElementById(`stw_style_${query._id}`)
+    if (style) style.textContent = query.style
 
     this.show(this.showing)
     this.updating = false
   }
 
   public insertSubtitles(queries: string[]) {
-    console.log("called: insertSubtitles", queries)
     return this.socket.operate("query/list", {
       ids: queries
     }).then(async queryList => {
@@ -211,12 +209,23 @@ export class STW {
   }
 
   public insertSubtitle(query: IRenderInstanceQuery, insertBefore?: number) {
-    console.log("called: insertSubtitle", query, insertBefore)
     if (!query) {
       console.error("insertSubtitle: クエリが指定されていません!", query)
       return
     }
+
     const preset = this.presets.find(e => e._id === query.presetId)
+
+    const pstyle = document.getElementById(`stw_style_${query._id}`)
+    if (pstyle) {
+      pstyle.textContent = query.style
+    } else {
+      const style = document.createElement("style")
+      style.id = `stw_style_${query._id}`
+      style.textContent = query.style
+      document.head.appendChild(style)
+    }
+
     const replacers = []
     for (const replacer of query.replace || preset.replace) {
       replacers.push(new RegExp(replacer, "g"))
@@ -228,10 +237,7 @@ export class STW {
     }
 
     const el = document.createElement("div")
-    el.classList.add("wrapper", query._id, query.presetId)
-    const style = document.createElement("style")
-    style.textContent = query.style || preset.style
-    el.appendChild(style)
+    el.classList.add("wrapper", `stw-q-${query._id}`, `stw-q-${query.presetId}`)
     el.innerHTML = rhtml
     el.dataset.id = query._id
     el.dataset.presetId = query.presetId
@@ -306,13 +312,12 @@ export class STW {
     }
   }
 
-  public show(target: number) {
-    console.log("called: show", target)
+  public show(target: string) {
     if (this.setTimeout) clearTimeout(this.setTimeout)
     this.setTimeout = null
     if (this.subtitles.length === 0) return
     else if (this.subtitles.length === 1) {
-      this.showing = 0
+      this.showing = null
       this.subtitles[0].classList.add("show")
       this.subtitles[0].classList.remove("hide")
       for (const item of Array.from(this.subtitles[0].children)) {
@@ -321,10 +326,10 @@ export class STW {
       }
       return
     }
-    this.showing = target % this.subtitles.length
+    this.showing = target
     for (let i = 0; i < this.subtitles.length; i += 1) {
       const subtitle = this.subtitles[i]
-      if (i === this.showing) {
+      if (subtitle.classList.contains(`stw-q-${target}`)) {
         subtitle.classList.remove("hide")
         subtitle.classList.add("show")
         for (const item of Array.from(subtitle.children)) {
@@ -334,7 +339,8 @@ export class STW {
         subtitle.style.zIndex = String(1 * (this.instance.reverse ? -1 : 1))
         const timeout = Number(subtitle.dataset.timeout)
         if (timeout && timeout > 0 && !this.setTimeout) {
-          this.setTimeout = setTimeout(this.show.bind(this, i + 1), timeout) as any as number
+          const nextId = i + 1 >= this.subtitles.length ? this.instance.queries[i + 1] : this.instance.queries[0]
+          this.setTimeout = setTimeout(this.show.bind(this, nextId), timeout) as any as number
         }
       } else {
         subtitle.classList.add("hide")

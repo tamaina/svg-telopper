@@ -16,7 +16,7 @@ router.get("/assets*", async (ctx, next) => {
 router.get("*", async (ctx, next) => {
   ctx.type = "text/plain; charset=utf-8"
   await send(ctx as any, "help.md", {
-    root: `${__dirname}/views/`
+    root: `${__dirname}/../../views/`
   })
 })
 

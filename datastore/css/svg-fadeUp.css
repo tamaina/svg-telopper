@@ -1,0 +1,38 @@
+/*    アニメーション(表示)    */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10%, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+svg.show {
+  animation-duration: 1s;
+  animation-name: fadeInUp;
+  opacity: 1;
+}
+
+/*    アニメーション(消滅)   */
+
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(0, -10%, 42px);
+  }
+}
+
+svg.hide {
+  animation-duration: 1s;
+  animation-name: fadeOutUp;
+  opacity: 0;
+}

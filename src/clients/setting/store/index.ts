@@ -26,12 +26,10 @@ export const Store = (socket: Socket) => {
     },
     mutations: {
       set(state, x: { key: string; value: any }) {
-        console.log("set", x)
         nestedProperty.set(state, x.key, x.value)
       },
       // 配列にプッシュします
       push(state, x: { key: string; value: any }) {
-        console.log("push", x)
         // 対象が配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr().ok(target)) return
@@ -40,7 +38,6 @@ export const Store = (socket: Socket) => {
       },
       // 配列の要素をテスト(ディープイコール)して除外します
       remove(state, x: { key: string; value: any }) {
-        console.log("remove", x)
         // 対象が配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr().ok(target)) return
@@ -48,7 +45,6 @@ export const Store = (socket: Socket) => {
       },
       // 配列の要素をテストして除外します
       removeByKeyTest(state, x: { key: string; testKey: string; testValue: any }) {
-        console.log("removeByKeyTest", x)
         // 対象がオブジェクトの配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr($.obj()).ok(target)) return
@@ -56,7 +52,6 @@ export const Store = (socket: Socket) => {
       },
       // 配列の要素をテストしてアップデートします
       updateByKeyTest(state, x: { key: string; value: any; testKey: string; testValue: any }) {
-        console.log("updateByKeyTest", x)
         // 対象がオブジェクトの配列でなければやめる
         const target = nestedProperty.get(state, x.key)
         if (!target || !$.arr($.obj()).ok(target)) return
@@ -73,7 +68,7 @@ export const Store = (socket: Socket) => {
     if (newVal.length === 1 && newVal[0]) store.commit("obsInfo/changeScene", ["previewing", newVal[0]])
   })
   store.watch(state => (state as any).obsInfo.scenePreviewing, (newVal, oldVal) => {
-    if (store.state.activeScenes.length === 1) store.commit("set", { key: "activeScenes", value: newVal})
+    if (store.state.activeScenes.length === 1) store.commit("set", { key: "activeScenes", value: [newVal]})
   })
 
   socket.socket.addEventListener("message", ev => {
@@ -153,7 +148,7 @@ export const Store = (socket: Socket) => {
       const value = store.state.renderInstances.map(e => {
         if (e.renderInstanceId !== data.body.renderInstanceId) return e
         const newv = Object.assign({}, e)
-        newv.showingIndex = data.body.target
+        newv.showingQueryId = data.body.targetId
         return newv
       })
       store.commit("set", { key: "renderInstances", value })
@@ -168,7 +163,6 @@ export const Store = (socket: Socket) => {
   socket.operate("query/list", {
     isPreset: true
   }).then(data => {
-    console.log(data)
     if (data.queries === undefined) return
     store.commit("set", { key: "presets", value: data.queries })
   })

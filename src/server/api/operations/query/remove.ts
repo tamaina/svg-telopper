@@ -46,7 +46,6 @@ export default async (server: STServer, request: ISocketRequestData) => {
     { $pull: { queries: { $in: request.body.option.ids }}},
     { multi: true, returnUpdatedDocs: true }
   ).then(instances => {
-    console.log(instances)
     if (!instances) return
     for (const instance of instances) {
       server.broadcastData({

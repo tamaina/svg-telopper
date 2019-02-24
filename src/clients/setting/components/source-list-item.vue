@@ -5,12 +5,12 @@ source-list-item-render-instance(
   @click.exact="listClicked"
   @click.ctrl="listClickedWCtrl"
 ).source.source-text
-v-list-tile(
+//- v-list-tile(
   v-else-if="source.type === 'group'"
   :class="{ 'active red white--text': active }"
   @click.exact="listClicked"
   @click.ctrl="listClickedWCtrl"
-)
+  )
   v-list-tile-content
     v-list-tile-title {{ source.name }}
     v-list
@@ -19,12 +19,12 @@ v-list-tile(
         :source="source"
         :key="source.name"
       )
-v-list-tile(
+//- v-list-tile(
   v-else
   :class="{ 'active red white--text': active }"
   @click.exact="listClicked"
   @click.ctrl="listClickedWCtrl"
-).source.source-others
+  ).source.source-others
   v-list-tile-content
     v-list-tile-title {{ source.name }}
 </template>
@@ -54,10 +54,10 @@ export default Vue.extend({
     relatedRenderInstance() {
       if (this.source.type === "browser_source"
         && this.source.sourceSettings.url
-        && this.source.sourceSettings.url.startsWith(`${location.origin}/settings#`)
+        && this.source.sourceSettings.url.startsWith(`${location.origin}/render#`)
       ) {
         const url = new URL(this.source.sourceSettings.url)
-        if (url.hash.length > 1) {
+        if (url.hash && url.hash.length > 1) {
           return this.$store.state.renderInstances.find(e => e.renderInstanceId ===  url.hash.slice(1))
         } else return false
       } else {
@@ -66,7 +66,6 @@ export default Vue.extend({
     }
   },
   mounted() {
-    console.log(this.source)
   },
   methods: {
     listClicked(ev: MouseEvent) {

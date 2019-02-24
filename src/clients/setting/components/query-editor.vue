@@ -200,7 +200,8 @@ const renew = (component: Vue, mpreset?: any) => {
       tab: null,
       editingText: null,
       editableTexts: [],
-      editId: null
+      editId: null,
+      presetq: null
     }
   const store = component.$store
   const queries = editing.map(e => {
@@ -208,8 +209,6 @@ const renew = (component: Vue, mpreset?: any) => {
     .concat(store.state.queriesShowing))
     .find(x => x._id === e || x._edit_id === e)
   })
-  console.log(editing)
-  console.log(queries)
   if (!$.arr($.obj()).min(0).ok(queries)) return
   const qs = {
     ids: [],
@@ -255,7 +254,6 @@ const renew = (component: Vue, mpreset?: any) => {
       return self.findIndex(x => equal(e, x, { strict: true })) === i
     })
   }
-  console.log(filtered)
 
   if (!mpreset) {
     if (filtered.presetId.length === 1) {
@@ -268,6 +266,7 @@ const renew = (component: Vue, mpreset?: any) => {
   }
 
   let preset = mpreset || (res.presetId ? component.$store.state.presets.find(e => e._id === filtered.presetId[0]) : null)
+  res.presetq = preset
   if (preset) preset = Object.assign({}, preset)
 
   for (const key in qs) {
@@ -279,17 +278,17 @@ const renew = (component: Vue, mpreset?: any) => {
       break
     case "text":
       if (filtered.text.length === 1) {
-        res.text = filtered.text[0]
+        res.text = [].concat(filtered.text[0])
         break
       }
-      res.text = preset ? preset.text ? preset.text : (preset.replace || [""]) : [""]
+      res.text = preset ? preset.text ? [].concat(preset.text) : ([].concat(preset.replace) || [""]) : [""]
       break
     case "replace":
       if (filtered.replace.length === 1) {
-        res.replace = filtered.replace[0]
+        res.replace = [].concat(filtered.replace[0])
         break
       }
-      res.replace = preset ? preset.replace : [""]
+      res.replace = preset ? [].concat(preset.replace) : [""]
       break
     case "presetName":
       if (filtered.presetName.length === 1) {
@@ -378,6 +377,7 @@ export default Vue.extend({
       const query = {} as { [key: string]: any }
       const targetKeys = [
         "presetName",
+        "presetId",
         "replace",
         "text",
         "innerHtml",
@@ -394,19 +394,20 @@ export default Vue.extend({
         case "class":
           if (
             this.$data.classStr !== null && (
-              this.$data.preset ?
-              (this.$data.classStr !== this.preset.class) :
+              this.$data.presetq ?
+              (this.$data.classStr !== this.$data.presetq.class) :
               true )
           ) query.class = this.$data.classStr
           break
+        case "presetId":
         case "presetName":
-          if (this.$data.presetName !== null) query.presetName = this.$data.presetName
+          if (this.$data[key] !== null) query[key] = this.$data[key]
           break
         default:
           if (
             this.$data[key] !== null && (
-              this.$data.preset ?
-              !equal(this.$data[key], this.preset[key], { strict: true }) :
+              this.$data.presetq ?
+              !equal(this.$data[key], this.$data.presetq[key], { strict: true }) :
               true )
           ) query[key] = this.$data[key]
         }
@@ -489,7 +490,7 @@ export default Vue.extend({
           if (
             this.$data.classStr !== null && (
               !this.$data.presetName ?
-              (this.$data.classStr !== this.preset.class) :
+              (this.$data.classStr !== this.$data.presetq.class) :
               true )
           ) query.class = this.$data.classStr
           break
@@ -497,12 +498,13 @@ export default Vue.extend({
           if (
             this.$data[key] !== null && (
               !this.$data.presetName ?
-              !equal(this.$data[key], this.preset[key], { strict: true }) :
+              !equal(this.$data[key], this.$data.presetq[key], { strict: true }) :
               true )
           ) query[key] = this.$data[key]
         }
       }
       if (this.$data.presetName) query.presetId = this.$data.ids[0]
+      if (this.$data.presetId) query.presetId = this.$data.presetId
       const vdata = this.$data
       this.$root.$data.socket.operate("query/create", {
         query

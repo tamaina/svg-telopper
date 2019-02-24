@@ -34,7 +34,6 @@ import { getUniqueStr } from "../../../getUniqueStr"
 const i18n = I18n("components/query-list")
 
 const renew = (component: Vue) => {
-  console.log("renew", component.$data.selectedRenderInstances)
   if (component.$data.selectedRenderInstances === null || component.$data.selectedRenderInstances === undefined || component.$data.selectedRenderInstances.length === 0) {
     component.$store.commit("set", { key: "queriesShowing", value: [] })
     component.$data.queries = []
@@ -103,11 +102,9 @@ export default Vue.extend({
   methods: {
     listClicked(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
-      const id = current.dataset.queryId
-      console.log("listClicked", current)
-      const target = this.$data.queries.findIndex(e => e._id === id)
+      const targetId = current.dataset.queryId
       if (
-        (target || target === 0) &&
+        targetId &&
         current.classList.contains("active") &&
         this.$data.selectedRenderInstances &&
         this.$data.selectedRenderInstances.length === 1 &&
@@ -117,12 +114,12 @@ export default Vue.extend({
           body: {
             type: "showRenderInstanceSubtitle",
             renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
-            target
+            targetId
           }
         })
         return
       }
-      this.$store.commit("set", { key: "editingQueries", value: [id] })
+      this.$store.commit("set", { key: "editingQueries", value: [targetId] })
     },
     listClickedWCtrl(ev: MouseEvent) {
       const current = (ev.currentTarget || ev.target) as HTMLElement
@@ -172,11 +169,9 @@ export default Vue.extend({
     },
     draggableItemClicked(ev: any) {
       const current = (ev.item as HTMLElement).children.item(0) as HTMLElement
-      const id = current.dataset.queryId
-      console.log("draggableItemClicked", current)
-      const target = this.$data.queries.findIndex(e => e._id === id)
+      const targetId = current.dataset.queryId
       if (
-        (target || target === 0) &&
+        targetId &&
         current.parentElement.classList.contains("active") &&
         this.$data.selectedRenderInstances &&
         this.$data.selectedRenderInstances.length === 1 &&
@@ -186,12 +181,12 @@ export default Vue.extend({
           body: {
             type: "showRenderInstanceSubtitle",
             renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
-            target
+            targetId
           }
         })
         return
       }
-      this.$store.commit("set", { key: "editingQueries", value: [id] })
+      this.$store.commit("set", { key: "editingQueries", value: [targetId] })
     },
     dragged(ev: any) {
       if (

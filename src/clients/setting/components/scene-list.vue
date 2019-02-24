@@ -70,7 +70,7 @@ export default Vue.extend({
         // シーンリストから削除
         this.$store.commit("remove", { key: "activeScenes", value: targetScene })
       } else if (
-      // 2回目に(アクティブな状態でもういちど)押された
+        // 2回目に(アクティブな状態でもういちど)押された
         this.$store.state.activeScenes.some(e => e === targetScene) &&
         this.$store.state.obsInfo.currentScene !== targetScene &&
         targetScene
@@ -83,8 +83,10 @@ export default Vue.extend({
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetScene = current.dataset.scene || null
       if (!this.$store.state.activeScenes.some(e => e === targetScene)) {
-      // アクティブではないならシーンリストを置き換え
+        // アクティブではないならシーンリストを置き換え
         this.$store.commit("set", { key: "activeScenes", value: [ targetScene ]})
+        // スタジオモード有効時、プレビュー
+        if (this.$store.state.obsInfo.studioMode) this.$store.commit("obsInfo/changeScene", ["previewing", targetScene])
       }
     },
     listClickedWCtrlWOShift(ev: MouseEvent) {
@@ -97,7 +99,7 @@ export default Vue.extend({
       const current = (ev.currentTarget || ev.target) as HTMLElement
       const targetScene = current.dataset.scene || null
       if (!this.$store.state.activeScenes.some(e => e === targetScene)) {
-      // アクティブではないならシーンリストにpush
+        // アクティブではないならシーンリストにpush
         this.$store.commit("push", { key: "activeScenes", value: targetScene })
       }
     }

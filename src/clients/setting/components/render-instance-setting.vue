@@ -72,7 +72,6 @@ export default Vue.extend({
   data() {
     return {
       queryId: null,
-      showingIndex: 0,
       reverse: null,
       renderInstanceIds: [],
       clientWidth: null,
@@ -81,6 +80,7 @@ export default Vue.extend({
   },
   computed: {
     instances() {
+      
       const filtered = this.$store.state.selectedRenderInstances.filter(e => e)
       return filtered.length > 0 ? 
                filtered.map(e => this.$store.state.renderInstances.find(x => x.renderInstanceId === e)).filter(e => e) :
@@ -106,58 +106,35 @@ export default Vue.extend({
       }
     },
     remove() {
-      this.$nextTick()
-      .then(() => {
-        console.log(this.$data.renderInstanceIds)
-        this.$root.$data.socket.operate("renderInstance/remove", { ids: this.$data.renderInstanceIds })
-        this.$store.commit("set", { key: "selectedRenderInstances", value: [] })
-      })
+      this.$root.$data.socket.operate("renderInstance/remove", { ids: this.$data.renderInstanceIds })
+      this.$store.commit("set", { key: "selectedRenderInstances", value: [] })
     }
   },
   watch: {
     async instances(newVal, oldVal) {
-      console.log(newVal)
-      if (!newVal || this.$store.state.queriesShowing.length !== 1) {
+      this.$data.instancesChanged = true
+      await this.$nextTick()
+      if (!newVal || this.$store.state.queriesShowing.length === 0) {
         this.$data.queryId = null
         return
       }
       const l = newVal.length === 1
-      let n
-      if (l) {
-        this.$data.showingIndex = newVal[0].showingIndex % this.$store.state.queriesShowing.length || 0
-        n = this.$store.state.queriesShowing[this.$data.showingIndex]
-      } else {
-        n = null
-      }
-      await this.$nextTick()
-      if (!n) {
-        this.$data.queryId = null
-        return
-      }
-      this.$data.queryId = n._id
+      this.$data.queryId = l ? newVal[0].showingQueryId : null
       for (const key of ["reverse", "clientWidth", "clientHeight"]) {
         const r = newVal.map(e => e[key]).filter(e => e)
         this.$data[key] = r.length !== 1 ? r[0] : null
       }
       this.$data.renderInstanceIds = newVal.map(e => e.renderInstanceId)
     },
-    queries(newVal, oldVal) {
-      console.log(newVal)
-      console.log(this.$data.showingIndex)
-      if (!newVal || newVal.length === 0) return
-      this.$data.queryId = newVal[this.$data.showingIndex % newVal.length]._id
-    },
-    queryId(newVal, oldVal) {
-      console.log(this.$store.state.queriesShowing)
-      if (!oldVal || !newVal || this.$data.renderInstanceIds.length !== 1) return
-      const target = this.$store.state.queriesShowing.findIndex(e => e._id === newVal)
-      this.$data.showingIndex = target
+    async queryId(newVal, oldVal) {
+      if (!newVal) return
+      await this.$nextTick()
       this.$root.$data.socket.pass({
         type: "renderInstanceInfo",
         body: {
           type: "showRenderInstanceSubtitle",
           renderInstanceId: this.$data.renderInstanceIds[0],
-          target
+          targetId: newVal
         }
       })
     }
