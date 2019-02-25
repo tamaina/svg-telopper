@@ -175,7 +175,6 @@ export class STW {
       if (!target) continue
       if (target.q === 0) {
         this.insertSubtitle(query as IRenderInstanceQuery, i)
-        continue
       } else if (target.q === 1) {
         this.presets = this.presets.map(e => {
           if (e._id !== query._id) return e
@@ -328,6 +327,10 @@ export class STW {
     }
     this.showing = target
     for (let i = 0; i < this.subtitles.length; i += 1) {
+      if (this.setTimeout) {
+        clearTimeout(this.setTimeout)
+        this.setTimeout = null
+      }
       const subtitle = this.subtitles[i]
       if (subtitle.classList.contains(`stw-q-${target}`)) {
         subtitle.classList.remove("hide")
@@ -339,8 +342,9 @@ export class STW {
         subtitle.style.zIndex = String(1 * (this.instance.reverse ? -1 : 1))
         const timeout = Number(subtitle.dataset.timeout)
         if (timeout && timeout > 0 && !this.setTimeout) {
-          const nextId = i + 1 >= this.subtitles.length ? this.instance.queries[i + 1] : this.instance.queries[0]
-          this.setTimeout = setTimeout(this.show.bind(this, nextId), timeout) as any as number
+          const nextId = i + 1 >= this.subtitles.length ?
+                         this.instance.queries[0] : this.instance.queries[i + 1]
+          if (nextId) this.setTimeout = setTimeout(this.show.bind(this, nextId), timeout) as any as number
         }
       } else {
         subtitle.classList.add("hide")

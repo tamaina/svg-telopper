@@ -122,6 +122,7 @@ export default Vue.extend({
       this.$data.queryId = l ? newVal[0].showingQueryId : null
       for (const key of ["reverse", "clientWidth", "clientHeight"]) {
         const r = newVal.map(e => e[key]).filter(e => e)
+        console.log(key, r)
         this.$data[key] = r.length !== 1 ? r[0] : null
       }
       this.$data.renderInstanceIds = newVal.map(e => e.renderInstanceId)

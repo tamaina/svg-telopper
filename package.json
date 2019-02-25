@@ -1,6 +1,6 @@
 {
   "name": "svgtelopper",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "SVGを読み込み、OBSでテロップを表示します。",
   "main": "./built/index.js",
   "scripts": {
