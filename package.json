@@ -46,7 +46,7 @@
     "@types/node": "^11.9.5",
     "@types/query-string": "^6.2.0",
     "@types/websocket": "0.0.40",
-    "autoprefixer": "^9.4.7",
+    "autoprefixer": "^9.4.9",
     "css-loader": "^2.1.0",
     "css-mqpacker": "^7.0.0",
     "cssnano": "^4.1.10",
