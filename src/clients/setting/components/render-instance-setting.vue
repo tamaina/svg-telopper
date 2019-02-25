@@ -111,9 +111,8 @@ export default Vue.extend({
     }
   },
   watch: {
-    async instances(newVal, oldVal) {
+    instances(newVal, oldVal) {
       this.$data.instancesChanged = true
-      await this.$nextTick()
       if (!newVal || this.$store.state.queriesShowing.length === 0) {
         this.$data.queryId = null
         return
@@ -122,14 +121,12 @@ export default Vue.extend({
       this.$data.queryId = l ? newVal[0].showingQueryId : null
       for (const key of ["reverse", "clientWidth", "clientHeight"]) {
         const r = newVal.map(e => e[key]).filter(e => e)
-        console.log(key, r)
-        this.$data[key] = r.length !== 1 ? r[0] : null
+        this.$data[key] = r.length === 1 ? r[0] : null
       }
       this.$data.renderInstanceIds = newVal.map(e => e.renderInstanceId)
     },
-    async queryId(newVal, oldVal) {
+    queryId(newVal, oldVal) {
       if (!newVal) return
-      await this.$nextTick()
       this.$root.$data.socket.pass({
         type: "renderInstanceInfo",
         body: {
