@@ -76,7 +76,7 @@
     "stylus-loader": "^3.0.2",
     "ts-loader": "^5.3.3",
     "tslint": "^5.13.0",
-    "typescript": "^3.3.3",
+    "typescript": "^3.3.3333",
     "vue": "^2.6.7",
     "vue-i18n": "^8.8.2",
     "vue-loader": "^15.6.2",
@@ -87,7 +87,7 @@
     "vuetify-loader": "^1.2.1",
     "vuex": "^3.1.0",
     "vuex-persistedstate": "^2.5.4",
-    "webpack": "^4.29.4",
+    "webpack": "^4.29.5",
     "webpack-stream": "^5.2.1"
   }
 }
