@@ -9,6 +9,8 @@ const colors = require("colors")
 const $ = require("gulp-load-plugins")()
 const wpackconf = require("./webpack.config")
 
+const pkg = require("./package.json")
+
 gulp.task("webpack", (cb) => {
   webpackStream(wpackconf, webpack)
     .pipe(gulp.dest("./built/assets/"))
@@ -73,3 +75,28 @@ gulp.task("default",
     ),
     (cb) => { cb() }
   ))
+
+gulp.task("zip", (cb) => {
+  gulp.src([
+    "*.md",
+    "LICENSE",
+    "package.json",
+    "package-lock.json",
+    ".config.yaml",
+    "*.bat",
+    "salt.js",
+    "views/**/*",
+    "datastore/db/data/queries.nedb",
+    "locales/**/*",
+    "built/**/*"
+  ], { base: "." })
+    .pipe($.zip(`svg-telopper-v${pkg.version}.zip`))
+    .pipe(gulp.dest("zips"))
+    .on("end", () => {
+      log(colors.green(`☑ zipped (svg-telopper-v${pkg.version}.zip)`))
+      cb()
+    })
+    .on("error", (err) => {
+      cb(err)
+    })
+})

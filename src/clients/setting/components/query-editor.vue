@@ -236,7 +236,7 @@ const renew = (component: Vue, mpreset?: any) => {
           break
         case "replace":
         case "text":
-          qs[key].push(query[key] ? [].concat(query[key]) : undefined)
+          qs[key].push(query[key] ? query[key].concat() : undefined)
           break
         case "classStr":
           qs.classStr.push(query.class)
@@ -278,17 +278,17 @@ const renew = (component: Vue, mpreset?: any) => {
       break
     case "text":
       if (filtered.text.length === 1) {
-        res.text = [].concat(filtered.text[0])
+        res.text = filtered.text[0].concat()
         break
       }
-      res.text = preset ? preset.text ? [].concat(preset.text) : ([].concat(preset.replace) || [""]) : [""]
+      res.text = preset ? preset.text ? preset.text.concat() : (preset.replace.concat() || [""]) : [""]
       break
     case "replace":
       if (filtered.replace.length === 1) {
-        res.replace = [].concat(filtered.replace[0])
+        res.replace = filtered.replace[0].concat()
         break
       }
-      res.replace = preset ? [].concat(preset.replace) : [""]
+      res.replace = preset ? preset.replace.concat() : [""]
       break
     case "presetName":
       if (filtered.presetName.length === 1) {
@@ -348,7 +348,8 @@ export default Vue.extend({
       anchor: null,
       editingText: null,
       editableTexts: [],
-      editId: null
+      editId: null,
+      beforeEdit: {}
     }
   },
   components: {
@@ -393,11 +394,11 @@ export default Vue.extend({
         switch (key) {
         case "class":
           if (
-            this.$data.classStr !== null && (
+            this.$data.classStr !== null &&
               this.$data.presetq ?
-              (this.$data.classStr !== this.$data.presetq.class) :
-              true )
-          ) query.class = this.$data.classStr
+              (this.$data.classStr !== this.$data.presetq.class || this.$data.beforeEdit.classStr !== this.$data.classStr) :
+              true
+              ) query.class = this.$data.classStr
           break
         case "presetId":
         case "presetName":
@@ -407,7 +408,7 @@ export default Vue.extend({
           if (
             this.$data[key] !== null && (
               this.$data.presetq ?
-              !equal(this.$data[key], this.$data.presetq[key], { strict: true }) :
+              !equal(this.$data[key], this.$data.presetq[key], { strict: true }) || !equal(this.$data[key], this.$data.beforeEdit[key], { strict: true }) :
               true )
           ) query[key] = this.$data[key]
         }
@@ -517,22 +518,39 @@ export default Vue.extend({
               queries: instance.queries.concat([data._id])
             }
           })
-          this.$store.commit("set", { key: "editingQueries", value: [data._id] })
         })
     }
   },
   watch: {
     editing(newVal, oldVal) {
       const res = renew(this)
+      const beforeEdit = {} as any
       for (const key in res) {
         this.$data[key] = res[key]
+        if ($.arr($.any).ok(res[key])) {
+          beforeEdit[key] = res[key].concat()
+        } else if ($.obj().ok(res[key])) {
+          beforeEdit[key] = Object.assign({}, res[key])
+        } else {
+          beforeEdit[key] = res[key]
+        }
       }
+      this.$data.beforeEdit = beforeEdit
     },
     preset(newVal, oldVal) {
       const res = renew(this, newVal)
+      const beforeEdit = {} as any
       for (const key in res) {
         this.$data[key] = res[key]
+        if ($.arr($.any).ok(res[key])) {
+          beforeEdit[key] = res[key].concat()
+        } else if ($.obj().ok(res[key])) {
+          beforeEdit[key] = Object.assign({}, res[key])
+        } else {
+          beforeEdit[key] = res[key]
+        }
       }
+      this.$data.beforeEdit = beforeEdit
     }
   },
   i18n

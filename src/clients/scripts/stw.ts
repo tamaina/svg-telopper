@@ -45,6 +45,12 @@ export class STW {
         case "queryUpdated":
           this.updateQuery(data.body.query)
           break
+        case "queryCreated":
+          if (data.body.query.presetName) this.presets.push(data.body.query)
+          break
+        case "queriesRemoved":
+          this.presets = this.presets.filter(e => !data.body.ids.some(x => x === e._id))
+          break
       }
     })
   }
@@ -116,7 +122,7 @@ export class STW {
     let passed = 0
     if (renewAllSubtitles) this.renewAllSubtitles(nextInstance.queries)
     else {
-      const elementsPool = [].concat(this.subtitles) as HTMLElement[]
+      const elementsPool = this.subtitles.concat() as HTMLElement[]
       for (let i = 0; i < nextInstance.queries.length; i += 1) {
         const query = nextInstance.queries[i]
         const oldElem = this.client.children.item(i - passed) as HTMLElement
@@ -213,7 +219,7 @@ export class STW {
       return
     }
 
-    const preset = this.presets.find(e => e._id === query.presetId)
+    const preset = this.presets.find(e => e._id === query.presetId) || this.presets[0]
 
     const pstyle = document.getElementById(`stw_style_${query._id}`)
     if (pstyle) {
@@ -299,8 +305,8 @@ export class STW {
         }
       }
     }
-    const scaleX = scaleXs.length > 0 ? Math.max(...scaleXs) : 1
-    const scaleY = scaleYs.length > 0 ? Math.max(...scaleYs) : 1
+    const scaleX = scaleXs.length > 0 ? Math.min(...scaleXs) : 1
+    const scaleY = scaleYs.length > 0 ? Math.min(...scaleYs) : 1
     subtitle.style.transform = `scale(${scaleX}, ${scaleY})`
 
     if ((query.func && query.func !== "") || (preset.func && preset.func !== "")) {
