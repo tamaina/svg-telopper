@@ -327,10 +327,6 @@ export class STW {
     }
     this.showing = target
     for (let i = 0; i < this.subtitles.length; i += 1) {
-      if (this.setTimeout) {
-        clearTimeout(this.setTimeout)
-        this.setTimeout = null
-      }
       const subtitle = this.subtitles[i]
       if (subtitle.classList.contains(`stw-q-${target}`)) {
         subtitle.classList.remove("hide")
