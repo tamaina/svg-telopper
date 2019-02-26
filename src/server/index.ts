@@ -29,13 +29,23 @@ export class STServer {
   constructor() {
     log(`SVG Telopper v${pkg.version} Server Starting...`)
 
-    obsSocket(this)
     this.httpServer = createServer(app.callback())
     socket(this)
     db.renderInstances.update({}, { $set: { connectionCount: 0 } }, { multi: true })
 
     this.httpServer.listen(config.port)
     log(`サーバーを開始しました。${colors.green(config.url)}`)
+
+    this.obsSocket()
+  }
+
+  public obsSocket() {
+    obsSocket(this)
+    .catch(e => {
+      log(colors.red(`${e}`))
+      log(colors.magenta("10秒後に再接続を試みます。"))
+      setTimeout(this.obsSocket.bind(this), 10000)
+    })
   }
 
   public broadcastData(data: ISocketBroadData) {
