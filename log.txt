@@ -1,5 +1,20 @@
-[[90m03:11:51[39m] Error!: @obs/getSceneTree
-[[90m03:11:51[39m] { error: "specified source doesn't exist",
-  'message-id': '11',
-  status: 'error',
-  messageId: '11' }
+D:\svgTypeWriter\built\server\obsSocket.js:32
+        throw new Error(info);
+        ^
+
+Error: OBSのWebSocketから応答がありません。
+    at fail (D:\svgTypeWriter\built\server\obsSocket.js:32:15)
+    at Timeout.setTimeout [as _onTimeout] (D:\svgTypeWriter\built\server\obsSocket.js:157:21)
+    at listOnTimeout (timers.js:324:15)
+    at processTimers (timers.js:268:5)
+[37;40mnpm[0m [0m[31;40mERR![0m [0m[35mcode[0m ELIFECYCLE
+[0m[37;40mnpm[0m [0m[31;40mERR![0m [0m[35merrno[0m 1
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m svgtelopper@2.0.5 start: `node built/index.js`
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m Exit status 1
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m 
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m Failed at the svgtelopper@2.0.5 start script.
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m This is probably not a problem with npm. There is likely additional logging output above.
+[0m
+[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m A complete log of this run can be found in:
+[0m[37;40mnpm[0m [0m[31;40mERR![0m[35m[0m     C:\Users\tamai\AppData\Roaming\npm-cache\_logs\2019-02-26T23_11_05_204Z-debug.log
+[0m

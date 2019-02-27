@@ -1,5 +1,4 @@
 import { deepStrictEqual } from "assert"
-import * as retry from "async-retry"
 import * as log from "fancy-log"
 import * as OBSWebSocket from "obs-websocket-js"
 
@@ -19,15 +18,12 @@ function equal(a: any, b: any) {
 }
 
 export const obsSocket = async (server: STServer) => {
-  let reconnecting = false
   const obs = new OBSWebSocket()
   log("OBSのWebSocketに接続します...")
   log(config.obs)
 
-  const reconnect = (info: string) => {
-    if (reconnecting) return
-    reconnecting = true
-    server.obsInfo = {
+  const fail = (info: string) => {
+    const obsInfo = {
       connected: false,
       scName: null,
       scenes: [],
@@ -35,7 +31,9 @@ export const obsSocket = async (server: STServer) => {
       scenePreviewing: null,
       studioMode: false
     }
-    throw new Error("OBSに接続できませんでした。")
+    server.obsInfo = obsInfo
+    server.broadcastData({ type: "update", body: { type: "obsInfo", obsInfo }})
+    throw new Error(info)
   }
 
   const broadcastData = (type: string, data: { [key: string]: any }) => {
@@ -134,14 +132,14 @@ export const obsSocket = async (server: STServer) => {
 // tslint:disable-next-line: max-line-length
     if (process.env.NODE_ENV === "development") log(`ObsInfo: シーンコレクション:${newInfo.scName}, ソース数${await db.obsSources.count({})}, シーン数${server.obsInfo.scenes.length}`)
     } catch (e) {
-    reconnect("OBSの情報を取得する際、問題が発生しました。")
+    fail("OBSの情報を取得する際、問題が発生しました。")
     }
   }
 
   const doUpdateObs = () => {
     updateObs()
     .catch(() => {
-      reconnect("OBSのWebSocketからの情報の取得に失敗しました。20秒後に再接続を試みます。")
+      fail("OBSのWebSocketからの情報の取得に失敗しました。")
     })
   }
 
@@ -171,7 +169,7 @@ export const obsSocket = async (server: STServer) => {
   })
 
   obs.on("Exiting", () => {
-    reconnect("OBSのWebSocketが切断されました。")
+    fail("OBSのWebSocketが切断されました。")
   })
 
   await obs.connect(config.obs)
@@ -180,7 +178,7 @@ export const obsSocket = async (server: STServer) => {
       server.obs = obs
     })
     .catch(() => {
-      reconnect("OBSのWebSocketへの接続に失敗しました。20秒後に再接続を試みます。")
+      fail("OBSのWebSocketへの接続に失敗しました。")
     })
 
   updateObs()
@@ -196,7 +194,7 @@ export const obsSocket = async (server: STServer) => {
       last = new Date()
       setTimeout(() => {
         if ((new Date()).getTime() - last.getTime() > 4000) {
-          reconnect("OBSのWebSocketから応答がありません。20秒後に再接続を試みます。")
+          fail("OBSのWebSocketから応答がありません。")
           throw Error()
         }
       }, 5000)
