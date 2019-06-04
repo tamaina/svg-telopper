@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.15",
-    "@fortawesome/free-solid-svg-icons": "^5.7.2",
+    "@fortawesome/free-solid-svg-icons": "^5.9.0",
     "@fortawesome/vue-fontawesome": "^0.1.5",
     "@types/async-retry": "^1.2.1",
     "@types/deep-equal": "^1.0.1",
