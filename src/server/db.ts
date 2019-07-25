@@ -1,33 +1,34 @@
-import * as Nedb from "nedb-promises"
+import Datastore = require("nedb-promises")
 import { config } from "../config"
 
 class Db {
-  public queries: Nedb
-  public renderInstances: Nedb
-  public obsSources: Nedb
-  public obsScenes: Nedb
+  public queries: Datastore
+  public renderInstances: Datastore
+  public obsSources: Datastore
+  public obsScenes: Datastore
 
   constructor() {
-    this.queries = Nedb.create({
+    this.queries = Datastore.create({
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/queries.nedb`
     })
-    this.renderInstances = Nedb.create({
+    this.renderInstances = Datastore.create({
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/renderInstances.nedb`
     })
-    this.obsSources = Nedb.create(process.env.NODE_ENV === "production" ? {} : {
+    this.obsSources = Datastore.create(process.env.NODE_ENV === "production" ? {} : {
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/obsSources.nedb`
     })
-    this.obsScenes = Nedb.create(process.env.NODE_ENV === "production" ? {} : {
+    this.obsScenes = Datastore.create(process.env.NODE_ENV === "production" ? {} : {
       autoload: true,
       filename: `${__dirname}/../../datastore/db/${config.db}/obsScenes.nedb`
-    })
-    this.queries.persistence.setAutocompactionInterval(20000)
-    this.renderInstances.persistence.setAutocompactionInterval(20000)
-    this.obsSources.persistence.setAutocompactionInterval(20000)
-    this.obsScenes.persistence.setAutocompactionInterval(20000)
+    });
+
+    (this.queries as any).persistence.setAutocompactionInterval(20000);
+    (this.renderInstances as any).persistence.setAutocompactionInterval(20000);
+    (this.obsSources as any).persistence.setAutocompactionInterval(20000);
+    (this.obsScenes as any).persistence.setAutocompactionInterval(20000);
   }
 }
 

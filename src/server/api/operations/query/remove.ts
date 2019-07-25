@@ -32,7 +32,8 @@ export const meta = {
 
 export default async (server: STServer, request: ISocketRequestData) => {
   db.queries.remove(
-    { _id: { $in: request.body.option.ids }}
+    { _id: { $in: request.body.option.ids }},
+    {}
   )
   server.broadcastData({
     type: "update",

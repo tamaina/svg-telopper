@@ -1,6 +1,6 @@
+import * as pug from "js-koa-pug"
 import * as Koa from "koa"
 import * as logger from "koa-logger"
-import * as Pug from "koa-pug"
 import * as locales from "../../locales"
 import * as salt from "../../salt"
 import { config } from "../config"
@@ -11,20 +11,15 @@ const app = new Koa()
 
 const langs = JSON.stringify(Object.keys(locales))
 
-new Pug({
-  app,
+app.use(pug(`${__dirname}/../../views`, {
   basedir: process.cwd(),
-  locals: {
-    config,
-    env: process.env.NODE_ENV,
-    langs,
-    pkg,
-    require,
-    salt: process.env.NODE_ENV !== "production" ? salt() : ""
-  },
-  viewPath: `${__dirname}/../../views`
-})
-
+  config,
+  env: process.env.NODE_ENV,
+  langs,
+  pkg,
+  require,
+  salt: process.env.NODE_ENV !== "production" ? salt() : ""
+}))
 app.use(logger())
 app.use(router.routes())
 app.use(router.allowedMethods())

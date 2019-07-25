@@ -56,7 +56,7 @@ export const obsSocket = async (server: STServer) => {
     ])
     const sceneNames = sceneList.scenes.map(e => e.name)
 
-    await db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } })
+    await db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } }, {})
 
     const renewSourcesPromises = [] as Array<Promise<any>>
     for (const source of sourcesList.sources as any[]) {
@@ -73,7 +73,7 @@ export const obsSocket = async (server: STServer) => {
       ))
     }
     renewSourcesPromises.push(
-      db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } })
+      db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } }, {})
     )
 
     await Promise.all(renewSourcesPromises)
@@ -95,9 +95,9 @@ export const obsSocket = async (server: STServer) => {
       }
     }
 
-    const groups = await db.obsSources.find({type: "group"})
+    const groups = (await db.obsSources.find({type: "group"})) as any
     const groupSettings = await Promise.all(groups.map(e => {
-      return obs.send("GetSourceSettings", { sourceName: e.name })
+      return obs.send("GetSourceSettings", { sourceName: (e as any).name })
     }))
     for (let i = 0; i < groups.length; i += 1) {
       const children = ((groupSettings[i] as any).sourceSettings).items.map(e => e.name)

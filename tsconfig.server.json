@@ -8,6 +8,5 @@
         "types": ["node"],
         "outDir": "./built",
     },
-    "include": ["src"],
-    "exclude": ["node_modules", "**/__tests__/*", "src/clients"]
+    "exclude": ["src/clients"]
 }
