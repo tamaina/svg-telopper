@@ -61,7 +61,7 @@
     "gulp-terser": "^1.2.0",
     "gulp-typescript": "^5.0.1",
     "gulp-yaml": "^2.0.4",
-    "gulp-zip": "^4.2.0",
+    "gulp-zip": "^5.0.0",
     "monaco-editor-webpack-plugin": "^1.7.0",
     "nested-property": "0.0.7",
     "nib": "^1.1.2",
