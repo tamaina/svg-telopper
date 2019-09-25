@@ -1,6 +1,6 @@
 module.exports = {
   plugins: {
-    autoprefixer: { browsers: "defaults" },
+    autoprefixer: {},
     "postcss-sorting": {},
     cssnano: { preset: "default" }
   }

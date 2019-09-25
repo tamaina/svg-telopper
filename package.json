@@ -1,6 +1,6 @@
 {
   "name": "svgtelopper",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "SVGを読み込み、OBSでテロップを表示します。",
   "main": "./built/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
   },
   "author": "tamaina",
   "license": "ISC",
+  "browsers": "defaults",
   "dependencies": {
     "cafy": "^15.1.1",
     "colors": "^1.3.3",
@@ -26,7 +27,6 @@
     "nedb": "^1.8.0",
     "nedb-promises": "^3.0.7",
     "obs-websocket-js": "^2.0.1",
-    "obs-websocket-js-types": "^4.4.0",
     "websocket": "^1.0.29"
   },
   "devDependencies": {
@@ -44,11 +44,9 @@
     "@types/koa-send": "^4.1.2",
     "@types/nedb": "^1.8.8",
     "@types/node": "^12.6.8",
-    "@types/query-string": "^6.3.0",
     "@types/websocket": "0.0.40",
     "autoprefixer": "^9.5.0",
     "css-loader": "^3.2.0",
-    "css-mqpacker": "^7.0.0",
     "cssnano": "^4.1.10",
     "del": "^4.0.0",
     "eslint": "^5.15.1",

@@ -28,7 +28,7 @@ export class STW {
       const riid = data.body.instance ?
                     (data.body.instance.renderInstanceId || data.body.renderInstanceId) : data.body.renderInstanceId
       if (
-        // data.bodyがない もしくは
+        // data.bodyがない もしくは renderInstanceIdが自分のじゃない
         !data.body ||
         !$.optionalNullable.str.match(new RegExp(renderInstanceId)).ok(riid)
       ) return
@@ -55,7 +55,7 @@ export class STW {
     })
   }
 
-  // initです。「initializeRenderInstance」を受け取ることで起動します。
+  // initializeRenderInstance
   public async init(body, root: HTMLElement) {
     if (this.initialized) return
     this.initialized = true
@@ -102,6 +102,7 @@ export class STW {
     })
   }
 
+  // renderInstanceUpdated
   public async updateRInfo(data) {
     if (this.updating) return
     this.updating = true
@@ -167,6 +168,7 @@ export class STW {
     this.updating = false
   }
 
+  // queryUpdated
   public updateQuery(query: IQuery) {
     if (this.updating) return
     this.updating = true
@@ -317,6 +319,7 @@ export class STW {
     }
   }
 
+  // showRenderInstanceSubtitle
   public show(target: string) {
     if (this.setTimeout) clearTimeout(this.setTimeout)
     this.setTimeout = null

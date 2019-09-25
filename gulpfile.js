@@ -81,7 +81,7 @@ gulp.task("zip", (cb) => {
     "*.md",
     "LICENSE",
     "package.json",
-    "package-lock.json",
+    "yarn.lock",
     ".config.yaml",
     "*.bat",
     "salt.js",

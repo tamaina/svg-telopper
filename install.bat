@@ -1,1 +1,1 @@
-npm install --production
+npx yarn install --production

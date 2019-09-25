@@ -35,9 +35,9 @@ const endpoints: IEndpoint[] = files.map(f => {
   const ep = require(`./operations/${f}`)
 
   return {
+    name: f.replace(".js", ""),
     exec: ep.default as operater,
-    meta: ep.meta || {},
-    name: f.replace(".js", "")
+    info: ep.meta || {}
   }
 })
 
