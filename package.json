@@ -61,7 +61,7 @@
     "gulp-yaml": "^2.0.4",
     "gulp-zip": "^5.0.0",
     "monaco-editor-webpack-plugin": "^1.7.0",
-    "nested-property": "0.0.7",
+    "nested-property": "1.0.1",
     "nib": "^1.1.2",
     "node-sass": "^4.12.0",
     "postcss-loader": "^3.0.0",
