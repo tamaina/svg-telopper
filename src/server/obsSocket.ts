@@ -48,7 +48,7 @@ export const obsSocket = async (server: STServer) => {
 
   const updateObs = async () => {
     try {
-    const [ { scName }, sceneList, sourcesList, { studioMode } ] = await Promise.all([
+    const [ { "sc-name": scName }, sceneList, sourcesList, { "studio-mode": studioMode } ] = await Promise.all([
       obs.send("GetCurrentSceneCollection"),
       obs.send("GetSceneList"),
       obs.send("GetSourcesList"),
@@ -73,7 +73,7 @@ export const obsSocket = async (server: STServer) => {
       ))
     }
     renewSourcesPromises.push(
-      db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } }, {})
+      db.obsSources.remove({ name: { $nin: sourcesList.sources } }, {})
     )
 
     await Promise.all(renewSourcesPromises)
@@ -113,14 +113,14 @@ export const obsSocket = async (server: STServer) => {
       )))
     }
 
-    const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList.currentScene
+    const scenePreviewing = studioMode ? (await obs.send("GetPreviewScene")).name : sceneList["current-scene"]
 
     const oldInfo = server.obsInfo
     const newInfo = {
       connected: true,
       scName,
       scenes: sceneNames,
-      currentScene: sceneList.currentScene,
+      currentScene: sceneList["current-scene"],
       scenePreviewing,
       studioMode
     } as IObsInfo
@@ -144,18 +144,18 @@ export const obsSocket = async (server: STServer) => {
   }
 
   obs.on("PreviewSceneChanged", data => {
-    server.obsInfo.scenePreviewing = data.sceneName
+    server.obsInfo.scenePreviewing = data["scene-name"]
     broadcastData("PreviewSceneChanged", data)
   })
   obs.on("SwitchScenes", data => {
-    server.obsInfo.currentScene = data.sceneName
+    server.obsInfo.currentScene = data["scene-name"]
     broadcastData("SwitchScenes", data)
   })
   obs.on("SceneCollectionChanged", () => {
     doUpdateObs()
   })
   obs.on("StudioModeSwitched", data => {
-    if (data.newState) {
+    if (data["new-state"]) {
       server.obsInfo.studioMode = true
       broadcastData("StudioModeSwitched", data)
       obs.send("GetPreviewScene")
@@ -185,19 +185,18 @@ export const obsSocket = async (server: STServer) => {
 
   setInterval(doUpdateObs, 5000)
 
-  obs.send("SetHeartbeat", { enable: true }, err => {
-    if (err) {
-      log(err)
-    }
-    let last = new Date()
-    obs.on("Heartbeat", () => {
-      last = new Date()
-      setTimeout(() => {
-        if ((new Date()).getTime() - last.getTime() > 4000) {
-          fail("OBSのWebSocketから応答がありません。")
-          throw Error()
-        }
-      }, 5000)
+  obs.send("SetHeartbeat", { enable: true })
+    .then(() => {
+      let last = new Date()
+      obs.on("Heartbeat", () => {
+        last = new Date()
+        setTimeout(() => {
+          if ((new Date()).getTime() - last.getTime() > 4000) {
+            fail("OBSのWebSocketから応答がありません。")
+            throw Error()
+          }
+        }, 5000)
+      })
     })
-  })
+    .catch(e => log(e))
 }

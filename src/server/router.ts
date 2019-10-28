@@ -3,7 +3,7 @@ import * as send from "koa-send"
 
 const router = new Router()
 
-router.get(["/render", "/setting"], async (ctx, next) => {
+router.get(["/render", "/setting"], async (ctx: any, next) => {
   ctx.render(ctx.request.url.slice(1))
 })
 
