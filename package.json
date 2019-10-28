@@ -25,7 +25,7 @@
     "koa-router": "^7.4.0",
     "koa-send": "^5.0.0",
     "nedb": "^1.8.0",
-    "nedb-promises": "^3.0.7",
+    "nedb-promises": "^4.0.0",
     "obs-websocket-js": "^2.0.1",
     "websocket": "^1.0.29"
   },
