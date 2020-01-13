@@ -90,6 +90,7 @@ export default Vue.extend({
   mounted() {
     this.$root.$data.socket.socket.addEventListener("message", ev => {
       if (!$.str.ok(ev.data)) return
+
       const data = JSON.parse(ev.data)
       if (data.body.type === "queryUpdated") {
         renew(this)
@@ -108,7 +109,8 @@ export default Vue.extend({
         current.classList.contains("active") &&
         this.$data.selectedRenderInstances &&
         this.$data.selectedRenderInstances.length === 1 &&
-        this.$data.selectedRenderInstances[0]) {
+        this.$data.selectedRenderInstances[0]
+      ) {
         this.$root.$data.socket.pass({
           type: "renderInstanceInfo",
           body: {
@@ -131,27 +133,28 @@ export default Vue.extend({
     },
     addNewQuery(ev: MouseEvent) {
       if (equal(this.$store.state.selectedRenderInstances, [null], { strict: true })) {
-      const _edit_id = `__EDIT__${getUniqueStr()}`
-      this.$store.commit("push", { key: "presets", value: {
-          _edit_id,
-          presetId: null,
-          presetName: "",
-          text: [""],
-          innerHtml: "",
-          replace: [""],
-          timeout: 0,
-          class: "",
-          stretch: false,
-          func: "",
-          style: "",
-          anchor: "middle"
-        }})
-      this.$store.commit("set", { key: "editingQueries", value: [_edit_id] })
+        const _edit_id = `__EDIT__${getUniqueStr()}`
+        this.$store.commit("push", { key: "presets", value: {
+            _edit_id,
+            presetId: null,
+            presetName: "",
+            text: [""],
+            innerHtml: "",
+            replace: [""],
+            timeout: 0,
+            class: "",
+            stretch: false,
+            func: "",
+            style: "",
+            anchor: "middle"
+          }})
+        this.$store.commit("set", { key: "editingQueries", value: [_edit_id] })
       } else {
         if (this.$store.state.presets.length === 0) {
           alert(this.$t("you-should-have-one-or-more-presets"))
           return
         }
+
         const presetId = this.$store.state.presets[0]._id
         this.$root.$data.socket.operate("query/create", { query: { presetId } })
           .then(data => {
@@ -175,7 +178,8 @@ export default Vue.extend({
         current.parentElement.classList.contains("active") &&
         this.$data.selectedRenderInstances &&
         this.$data.selectedRenderInstances.length === 1 &&
-        this.$data.selectedRenderInstances[0]) {
+        this.$data.selectedRenderInstances[0]
+      ) {
         this.$root.$data.socket.pass({
           type: "renderInstanceInfo",
           body: {
@@ -186,13 +190,15 @@ export default Vue.extend({
         })
         return
       }
+
       this.$store.commit("set", { key: "editingQueries", value: [targetId] })
     },
     dragged(ev: any) {
       if (
         this.$data.selectedRenderInstances &&
         this.$data.selectedRenderInstances.length === 1 &&
-        this.$data.selectedRenderInstances[0] !== null) {
+        this.$data.selectedRenderInstances[0] !== null
+      ) {
         this.$root.$data.socket.operate("renderInstance/update", {
           renderInstanceId: this.$data.selectedRenderInstances[0].renderInstanceId,
           instance: { queries: this.$data.queries.map(e => e._id) }
@@ -203,6 +209,7 @@ export default Vue.extend({
   watch: {
     xselectedRenderInstances(newVal, oldVal) {
       if (equal(newVal, oldVal)) return
+
       renew(this)
     }
   },

@@ -251,6 +251,7 @@ const renew = (component: Vue, mpreset?: any) => {
   for (const key in qs) {
     filtered[key] = qs[key].filter((e, i, self) => {
       if (e === undefined) return false
+
       return self.findIndex(x => equal(e, x, { strict: true })) === i
     })
   }
