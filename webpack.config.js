@@ -79,6 +79,10 @@ module.exports = {
           },
           "postcss-loader"
         ]
+      },
+      {
+        test: /\.ttf$/,
+        use: ['file-loader']
       }
     ]
   },

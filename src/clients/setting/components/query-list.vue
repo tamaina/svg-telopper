@@ -7,7 +7,7 @@ v-flex(grow shrink).query-list.overflow-auto.h-100.pb-0
       v-btn(icon v-show="oneInstanceSelected" @click="addNewQuery")
         font-awesome-icon(icon="plus")
     v-list(v-if="queries.length > 0")
-      draggable(v-model="queries" :options="{draggable:'.draggable'}" @choose="draggableItemClicked" @sort="dragged")
+      draggable(v-model="queries" draggable=".draggable" @choose="draggableItemClicked" @sort="dragged")
         v-list-tile(
           v-for="(query, i) in queries"
           :key="query._id || query._edit_id"
