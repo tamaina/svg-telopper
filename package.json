@@ -69,7 +69,7 @@
     "postcss-loader": "^3.0.0",
     "postcss-sorting": "^5.0.1",
     "pug-plain-loader": "^1.0.0",
-    "raw-loader": "^3.1.0",
+    "raw-loader": "^4.0.0",
     "reconnecting-websocket": "^4.1.10",
     "sass-loader": "8",
     "style-loader": "^1.1.2",
