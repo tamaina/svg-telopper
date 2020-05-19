@@ -45,7 +45,7 @@
     "@types/nedb": "^1.8.8",
     "@types/node": "^13.1.6",
     "@types/websocket": "1.0.0",
-    "autoprefixer": "^9.5.0",
+    "autoprefixer": "^9.8.0",
     "css-loader": "^3.2.0",
     "cssnano": "^4.1.10",
     "del": "5",
