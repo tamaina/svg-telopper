@@ -134,7 +134,7 @@ export default Vue.extend({
       }
     },
     addNewQuery(ev: MouseEvent) {
-      if (equal(this.$store.state.selectedRenderInstances, [null], { strict: true })) {
+      if (this.$store.state.selectedRenderInstances?.length === 1 && this.$store.state.selectedRenderInstances[0] === null) {
         const _edit_id = `__EDIT__${getUniqueStr()}`
         this.$store.commit("push", { key: "presets", value: {
             _edit_id,

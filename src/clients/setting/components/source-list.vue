@@ -50,7 +50,7 @@ export default Vue.extend({
       return this.$store.state.activeScenes
     },
     isAll() {
-      return equal(this.$store.state.activeScenes, [null], { strict: true })
+      return this.$store.state.activeScenes?.length === 1 && this.$store.state.activeScenes[0] === null
     }
   },
   mounted() {
@@ -63,7 +63,7 @@ export default Vue.extend({
   },
   watch: {
     activeScenes(newVal, oldVal) {
-      if (equal(newVal, [null], { strict: true })) {
+      if (newVal?.length === 1 && newVal[0] === null) {
         return this.$data.sourceList = []
       }
       this.$root.socket.operate("obs/getSceneTree", {
