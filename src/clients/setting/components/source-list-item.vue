@@ -53,11 +53,10 @@ export default Vue.extend({
     },
     relatedRenderInstance() {
       if (this.source.type === "browser_source"
-        && this.source.sourceSettings.url
-        && this.source.sourceSettings.url.startsWith(`${location.origin}/render#`)
+        && this.source.sourceSettings.url?.startsWith(`${location.origin}/render#`)
       ) {
         const url = new URL(this.source.sourceSettings.url)
-        if (url.hash && url.hash.length > 1) {
+        if (url.hash?.length > 1) {
           return this.$store.state.renderInstances.find(e => e.renderInstanceId ===  url.hash.slice(1))
         } else return false
       } else {

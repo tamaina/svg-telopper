@@ -34,26 +34,28 @@ import { getUniqueStr } from "../../../getUniqueStr"
 const i18n = I18n("components/query-list")
 
 const renew = (component: Vue) => {
-  if (component.$data.selectedRenderInstances === null || component.$data.selectedRenderInstances === undefined || component.$data.selectedRenderInstances.length === 0) {
-    component.$store.commit("set", { key: "queriesShowing", value: [] })
-    component.$data.queries = []
-    return
-  }
-  if (!component.$data.selectedRenderInstances || equal(component.$data.selectedRenderInstances, [null], { strict: true })) {
-    component.$store.commit("set", { key: "queriesShowing", value: component.$store.state.presets })
-    component.$data.queries = component.$store.state.presets
-    return
-  }
-  const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ? [...d, ...flatten(e)] : [...d, e], [])
-  const qs = component.$data.selectedRenderInstances.filter(e => e)
-                   .map(e => e.queries)
-  return component.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
-    .then(data => {
-        const queries = data.queries.filter(e => e)
-        component.$store.commit("set", { key: "queriesShowing", value: queries})
-        component.$data.queries = queries
-        return
-      })
+  return component.$nextTick(() => {
+    if (component.$data.selectedRenderInstances === null || component.$data.selectedRenderInstances === undefined || component.$data.selectedRenderInstances.length === 0) {
+      component.$store.commit("set", { key: "queriesShowing", value: [] })
+      component.$data.queries = []
+      return
+    }
+    if (component.$data.selectedRenderInstances?.length === 1 && component.$data.selectedRenderInstances[0] === null) {
+      component.$store.commit("set", { key: "queriesShowing", value: component.$store.state.presets })
+      component.$data.queries = component.$store.state.presets
+      return
+    }
+    const flatten = xs => xs.reduce((d, e) => Array.isArray(e) ? [...d, ...flatten(e)] : [...d, e], [])
+    const qs = component.$data.selectedRenderInstances.filter(e => e)
+                    .map(e => e.queries)
+    return component.$root.$data.socket.operate("query/list", { ids: flatten(qs) })
+      .then(data => {
+          const queries = data.queries.filter(e => e)
+          component.$store.commit("set", { key: "queriesShowing", value: queries})
+          component.$data.queries = queries
+          return
+        })
+  })
 }
 
 export default Vue.extend({

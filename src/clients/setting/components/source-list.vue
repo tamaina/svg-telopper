@@ -63,7 +63,7 @@ export default Vue.extend({
   },
   watch: {
     activeScenes(newVal, oldVal) {
-      if (equal(this.$store.state.activeScenes, [null], { strict: true })) {
+      if (equal(newVal, [null], { strict: true })) {
         return this.$data.sourceList = []
       }
       this.$root.socket.operate("obs/getSceneTree", {

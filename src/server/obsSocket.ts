@@ -56,7 +56,7 @@ export const obsSocket = async (server: STServer) => {
     ])
     const sceneNames = sceneList.scenes.map(e => e.name)
 
-    await db.obsScenes.remove({ name: { $nin: sceneList.scenes.map(e => e.name) } }, {})
+    await db.obsScenes.remove({ name: { $nin: sceneNames } }, {})
 
     const renewSourcesPromises = [] as Array<Promise<any>>
     for (const source of sourcesList.sources as any[]) {

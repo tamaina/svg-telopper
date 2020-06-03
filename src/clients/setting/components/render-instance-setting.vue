@@ -80,7 +80,6 @@ export default Vue.extend({
   },
   computed: {
     instances() {
-      
       const filtered = this.$store.state.selectedRenderInstances.filter(e => e)
       return filtered.length > 0 ? 
                filtered.map(e => this.$store.state.renderInstances.find(x => x.renderInstanceId === e)).filter(e => e) :
