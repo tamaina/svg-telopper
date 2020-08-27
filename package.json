@@ -43,7 +43,7 @@
     "@types/koa-router": "^7.0.40",
     "@types/koa-send": "^4.1.2",
     "@types/nedb": "^1.8.8",
-    "@types/node": "^14.0.9",
+    "@types/node": "^14.6.1",
     "@types/websocket": "1.0.0",
     "autoprefixer": "^9.5.0",
     "css-loader": "^3.2.0",
