@@ -7402,10 +7402,10 @@ vuetify-loader@^1.2.2:
     file-loader "^4.0.0"
     loader-utils "^1.2.0"
 
-vuetify@^1.5.6:
-  version "1.5.24"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-1.5.24.tgz#d5cf6e7289570d5d05f8832a097cd435d36d37df"
-  integrity sha512-guFOgEgZ8VpSgNXOv1QL2fOliaJBoiyNnf+bBqcXsnIppJGRlW1wyT6Ux7ZlQyphSHs+UK1aJNUjcyAtoOiHWg==
+vuetify@^2.5.2:
+  version "2.5.2"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.5.2.tgz#0f9ccf5dc8e9ee0a2f8376a965e2f909a420cac5"
+  integrity sha512-Tc8CJffVOTrBn0Zx51qn/m+Pl55EtOoKae7gIZjHGg9SQ/Oh94EWtsA8hF+JHE8udbQoef5GpWOpr2lCmBJ0zQ==
 
 vuex-persistedstate@^2.5.4:
   version "2.7.1"
